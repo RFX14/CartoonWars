@@ -24,6 +24,8 @@ class GameScene: SKScene {
         .magenta,
         .black
     ]
+    private var playerTowerPosition: CGPoint = .zero
+    private var enemyTowerPosition: CGPoint = .zero
     
     private let cam = SKCameraNode()
     private var prevTime: TimeInterval = .zero
@@ -32,13 +34,25 @@ class GameScene: SKScene {
     private var attacks: [AttackPair] = []
     
     override func didMove(to view: SKView) {
+        let bounds: CGRect = .init(origin: .zero, size: .init(width: 4000, height: 4000))
+        let xRange = SKRange(lowerLimit: bounds.minX - 600,
+                             upperLimit: bounds.maxX - 650)
+        let yRange = SKRange(lowerLimit: bounds.minY,
+                             upperLimit: bounds.maxY - view.bounds.height / 2)
+
+        let boundConstraint = SKConstraint.positionX(xRange, y: yRange)
+        
         self.camera = cam
+        self.camera?.constraints = [boundConstraint]
+        self.camera?.position = .init(x: -300, y: camera?.position.y ?? 0)
         addChild(cam)
         attacks.reserveCapacity(200)
         
         createSky()
         createHUD()
         createClouds()
+        createTower()
+        createTower(isEnemy: true)
         
         self.physicsWorld.contactDelegate = self
     }
@@ -134,6 +148,18 @@ extension GameScene {
 
 // MARK: Helper Creators
 extension GameScene {
+    func createTower(isEnemy: Bool = false) {
+        let w = (size.width + size.height) * 0.1
+        let tower = Tower(size: .init(width: w, height: w), isEnemy: isEnemy)
+        let xPos = ((size.width / 2) + w) * (isEnemy ? 1 : -1) + (isEnemy ? 3000 : 0)
+        let yPos = -(size.height / 2) + (w/2) + w
+        tower.position = .init(x: xPos, y: yPos + 50)
+        tower.zPosition = 1
+        tower.setScale(3)
+        
+        addChild(tower)
+    }
+    
     func createClouds() {
         for i in 1...6 {
             let cloud = SKSpriteNode(imageNamed: "cloud")
@@ -159,7 +185,7 @@ extension GameScene {
         let n = Troop(size: .init(width: w, height: w), mass: 5, isEnemy: true)
         let xPos = size.width + w + 2500
         let yPos = -(size.height / 2) + (w/2) + w
-        n.zPosition = 1
+        n.zPosition = 2
         
         n.position = .init(x: xPos, y: yPos)
         n.walk(duration: 15)
@@ -172,7 +198,7 @@ extension GameScene {
         n.health += Float(mass)
         let xPos = -(size.width / 2) + w
         let yPos = -(size.height / 2) + (w/2) + w
-        n.zPosition = 1
+        n.zPosition = 2
         
         n.position = .init(x: xPos, y: yPos)
         n.walk(duration: 15 + mass)
