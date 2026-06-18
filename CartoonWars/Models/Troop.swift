@@ -8,7 +8,6 @@
 import SpriteKit
 
 class Troop: SKSpriteNode {
-    let id: UUID = UUID()
     var dmgs: [Float]
     var health: Float
     var isEnemy: Bool
@@ -24,31 +23,15 @@ class Troop: SKSpriteNode {
         
         colorBlendFactor = 1
         
-        let sheetTexture = SKTexture(imageNamed: isEnemy ? "Orc-Walk" : "Soldier-Walk")
-        var frames: [SKTexture] = []
-        var frameCount = 8 // Total frames in sheet
-        var frameWidth: CGFloat = 1.0 / CGFloat(frameCount)
-
-        for i in 0..<frameCount {
-            let rect = CGRect(x: CGFloat(i) * frameWidth, y: 0, width: frameWidth, height: 1.0)
-            frames.append(SKTexture(rect: rect, in: sheetTexture))
-        }
-        self.walkFrames = frames
+        let walkName = isEnemy ? "Orc-Walk" : "Soldier-Walk"
+        walkFrames = getAnimation(frameCount: 8, name: walkName)
         
-        let attackTexture = SKTexture(imageNamed: isEnemy ? "Orc-Attack02" :  "Soldier-Attack01")
-        frames = []
-        frameCount = 6 // Total frames in sheet
-        frameWidth = 1.0 / CGFloat(frameCount)
-
-        for i in 0..<frameCount {
-            let rect = CGRect(x: CGFloat(i) * frameWidth, y: 0, width: frameWidth, height: 1.0)
-            frames.append(SKTexture(rect: rect, in: attackTexture))
-        }
-        self.attackFrames = frames
+        let attackName = isEnemy ? "Orc-Attack02" : "Soldier-Attack01"
+        attackFrames = getAnimation(frameCount: 6, name: attackName)
+        
         self.setScale(3)
         if isEnemy {
             self.xScale = -3
-            self.yScale = 3
         }
         
         // Create the physics body matching the sprite's size
@@ -69,6 +52,19 @@ class Troop: SKSpriteNode {
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func getAnimation(frameCount: Int, name: String, flip: Bool = false) -> [SKTexture] {
+        let sheetTexture = SKTexture(imageNamed: name)
+        var frames: [SKTexture] = []
+        let frameWidth: CGFloat = 1.0 / CGFloat(frameCount)
+
+        for i in 0..<frameCount {
+            let rect = CGRect(x: CGFloat(i) * frameWidth, y: 0, width: frameWidth, height: 1.0)
+            frames.append(SKTexture(rect: rect, in: sheetTexture))
+        }
+        
+        return frames
     }
     
     func walk(duration: CGFloat) {

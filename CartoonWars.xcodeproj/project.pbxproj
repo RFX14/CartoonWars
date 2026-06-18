@@ -21,6 +21,16 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		8D344AB12FE375FB00289B06 /* orc.atlas */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = orc.atlas;
+			sourceTree = "<group>";
+		};
+		8D344AB62FE3A05800289B06 /* soldier.atlas */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = soldier.atlas;
+			sourceTree = "<group>";
+		};
 		8D61E26B2FDE2A5A00BBCC07 /* CartoonWars */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -43,6 +53,8 @@
 		8D61E2602FDE2A5A00BBCC07 = {
 			isa = PBXGroup;
 			children = (
+				8D344AB62FE3A05800289B06 /* soldier.atlas */,
+				8D344AB12FE375FB00289B06 /* orc.atlas */,
 				8D61E26B2FDE2A5A00BBCC07 /* CartoonWars */,
 				8D61E26A2FDE2A5A00BBCC07 /* Products */,
 			);
@@ -70,6 +82,8 @@
 			buildRules = (
 			);
 			fileSystemSynchronizedGroups = (
+				8D344AB12FE375FB00289B06 /* orc.atlas */,
+				8D344AB62FE3A05800289B06 /* soldier.atlas */,
 				8D61E26B2FDE2A5A00BBCC07 /* CartoonWars */,
 			);
 			name = CartoonWars;
