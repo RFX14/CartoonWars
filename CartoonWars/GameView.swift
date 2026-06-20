@@ -22,7 +22,7 @@ struct GameView: View {
         case (.regular, .compact):
             50
         case (.compact, .regular):
-            100
+            150
         case (.compact, .compact):
             50
         case (_, _):
@@ -54,8 +54,9 @@ struct GameView: View {
                 }
                 
                 Spacer() // Pushes the HUD up to the top of the screen
-                
-                // You could put a bottom row of tower selection buttons here
+            }
+            HStack(alignment: .center) {
+                Spacer()
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
                         .foregroundStyle(.black)
@@ -70,8 +71,6 @@ struct GameView: View {
                         }
                     })
                 }
-                .padding(.top)
-                .padding(.bottom, -15)
                 .frame(width: uiHeight, height: uiHeight)
             }
         }

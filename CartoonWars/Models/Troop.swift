@@ -55,32 +55,52 @@ class BaseTroop: SKSpriteNode {
     }
     
     func walk() {
-        guard health > 0 else {
-            print("\(isEnemy ? "Orc is" : "Troop is") walkign and dead")
-            return
-        }
-        
+        guard health > 0 else { return }
         removeAllActions()
+        
         let walkAnimation = SKAction.animate(with: animations.walk, timePerFrame: 0.1)
         run(SKAction.repeatForever(walkAnimation))
         
         let enemyTowerPosition: CGPoint = isEnemy ? .zero : .init(x: 3000, y: 0)
         let currentDistance: CGFloat = sqrt(pow(enemyTowerPosition.x - position.x, 2))
+        
         let duration: TimeInterval = (currentDistance * timeToWalkToEnemyBase) / 3000
         let move = SKAction.move(
             to: enemyTowerPosition,
             duration: duration
         )
         
-        run(move, withKey: "movement")
+        run(move) {
+            self.attack()
+        }
+    }
+    
+    func death() {
+        physicsBody = nil // remove physics body to prevent dead ones from staying
+        removeAllActions()
+        
+        // knockback
+        let direction = isEnemy ? 1 : -1
+        let knockback = SKAction.move(
+            to: .init(
+                x: Int(position.x) + (300 * direction),
+                y: 0
+            ),
+            duration: isEnemy ? 0.5 : 0.4
+        )
+        
+        let deathAnimation = SKAction.animate(with: animations.death, timePerFrame: 0.1)
+        
+        run(deathAnimation)
+        run(knockback) {
+            self.removeFromParent()
+        }
     }
     
     func attack() {
-        guard health > 0 else {
-            print("\(isEnemy ? "Orc is" : "Troop is") attacking and dead")
-            return
-        }
+        guard health > 0 else { return }
         removeAllActions()
+        
         let attackAnimation = SKAction.animate(with: animations.attack, timePerFrame: 0.1)
         run(SKAction.repeatForever(attackAnimation))
     }
@@ -88,22 +108,7 @@ class BaseTroop: SKSpriteNode {
     func takeDamage(dmg: Float16) {
         health -= dmg
         if health <= 0 {
-            physicsBody = nil // remove physics body to prevent dead ones from staying
-            removeAllActions()
-            
-            // knockback
-            let direction = isEnemy ? 1 : -1
-            let knockback = SKAction.move(
-                by: .init(
-                    dx: 300 * direction,
-                    dy: 200
-                ),
-                duration: isEnemy ? 0.5 : 0.2
-            )
-
-            run(knockback) {
-                self.removeFromParent()
-            }
+            death()
         }
     }
     
@@ -116,7 +121,8 @@ final class Soldier: BaseTroop {
     init() {
         let animations: Animations = .init(
             walk: (0...7).map { SKTexture(imageNamed: "soldier_walk\($0)") },
-            attack: (0...5).map { SKTexture(imageNamed: "soldier_attack\($0)") }
+            attack: (0...5).map { SKTexture(imageNamed: "soldier_attack\($0)") },
+            death: (0...3).map { SKTexture(imageNamed: "soldier_death\($0)") }
         )
         
         let attackDmgs: [Float16] = [0, 2, 3.5]
@@ -133,7 +139,8 @@ final class Orc: BaseTroop {
     init() {
         let animations: Animations = .init(
             walk: (0...7).map { SKTexture(imageNamed: "orc_walk\($0)") },
-            attack: (0...5).map { SKTexture(imageNamed: "orc_attack\($0)") }
+            attack: (0...5).map { SKTexture(imageNamed: "orc_attack\($0)") },
+            death: (0...3).map { SKTexture(imageNamed: "orc_death\($0)") }
         )
         let attackDmgs: [Float16] = [0, 2, 3.5]
         

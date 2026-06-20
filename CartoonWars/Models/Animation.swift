@@ -14,4 +14,5 @@ enum AnimationState {
 struct Animations {
     let walk: [SKTexture]
     let attack: [SKTexture]
+    let death: [SKTexture]
 }
