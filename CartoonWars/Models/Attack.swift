@@ -8,8 +8,8 @@
 import SpriteKit
 
 struct Attack {
-    let reciever: Troop
-    var dmgs: [Float]
+    let reciever: BaseTroop
+    var dmgs: [Float16]
     let frequency: TimeInterval
     var prevHit: TimeInterval = 0
 }

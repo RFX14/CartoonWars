@@ -12,6 +12,6 @@ enum AnimationState {
 }
 
 struct Animations {
-    let walk: InlineArray<8, SKTexture>
-    let attack: InlineArray<6, SKTexture>
+    let walk: [SKTexture]
+    let attack: [SKTexture]
 }

@@ -7,35 +7,39 @@
 
 import SpriteKit
 
-class Troop: SKSpriteNode {
-    var dmgs: [Float]
-    var health: Float
-    var isEnemy: Bool
-    private var walkFrames: [SKTexture]!
-    private var attackFrames: [SKTexture]!
+class BaseTroop: SKSpriteNode {
+    /// Public Properties
+    let isEnemy: Bool
+    let attackDmg: [Float16]
+    var health: Float16
     
-    init(size: CGSize, color: UIColor = .white, mass: CGFloat = 5, isEnemy: Bool = false) {
+    /// Private Properties
+    private let animations: Animations
+    private let attackFrequency: TimeInterval
+    private let timeToWalkToEnemyBase: TimeInterval  // Secs
+    
+    init(animations: Animations, health: Float16, timeToWalkToEnemyBase: TimeInterval = 15, attackDmg: [Float16], attackFrequency: TimeInterval, isEnemy: Bool) {
+        self.animations = animations
+        self.health = health
+        self.attackDmg = attackDmg
+        self.attackFrequency = attackFrequency
         self.isEnemy = isEnemy
-        self.dmgs = isEnemy ? [0, 3, 4] : [0, 2, 3.5]
-        self.health = isEnemy ? 20 : 10
+        self.timeToWalkToEnemyBase = timeToWalkToEnemyBase
         
-        super.init(texture: nil, color: color, size: size)
-        
-        colorBlendFactor = 1
-        
-        let walkName = isEnemy ? "Orc-Walk" : "Soldier-Walk"
-        walkFrames = getAnimation(frameCount: 8, name: walkName)
-        
-        let attackName = isEnemy ? "Orc-Attack02" : "Soldier-Attack01"
-        attackFrames = getAnimation(frameCount: 6, name: attackName)
-        
+        super.init(texture: nil, color: .white, size: .init(width: 64, height: 64))
+        self.anchorPoint = .init(x: 0.5, y: 0.25) // Anchor is now the bottom of the sprite
         self.setScale(3)
-        if isEnemy {
-            self.xScale = -3
-        }
+        self.xScale = isEnemy ? -3 : 3
+        self.position = isEnemy ? .init(x: 3000, y: 0) : .zero
+        self.zPosition = 2
         
+        setupPhysics()
+        walk()
+    }
+    
+    private func setupPhysics() {
         // Create the physics body matching the sprite's size
-        self.physicsBody = SKPhysicsBody(rectangleOf: size)
+        self.physicsBody = SKPhysicsBody(rectangleOf: .init(width: 50, height: 50))
         self.physicsBody?.categoryBitMask =  isEnemy ? PhysicsCategory.Enemy.rawValue : PhysicsCategory.Player.rawValue
         self.physicsBody?.contactTestBitMask = isEnemy ? PhysicsCategory.Player.rawValue : PhysicsCategory.Enemy.rawValue
         self.physicsBody?.collisionBitMask = PhysicsCategory.None.rawValue
@@ -50,43 +54,43 @@ class Troop: SKSpriteNode {
         self.physicsBody?.allowsRotation = false
     }
     
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    private func getAnimation(frameCount: Int, name: String, flip: Bool = false) -> [SKTexture] {
-        let sheetTexture = SKTexture(imageNamed: name)
-        var frames: [SKTexture] = []
-        let frameWidth: CGFloat = 1.0 / CGFloat(frameCount)
-
-        for i in 0..<frameCount {
-            let rect = CGRect(x: CGFloat(i) * frameWidth, y: 0, width: frameWidth, height: 1.0)
-            frames.append(SKTexture(rect: rect, in: sheetTexture))
+    func walk() {
+        guard health > 0 else {
+            print("\(isEnemy ? "Orc is" : "Troop is") walkign and dead")
+            return
         }
         
-        return frames
-    }
-    
-    func walk(duration: CGFloat) {
-        let direction = isEnemy ? -1 : 1
-        let walkAnimation = SKAction.animate(with: walkFrames, timePerFrame: 0.1)
+        removeAllActions()
+        let walkAnimation = SKAction.animate(with: animations.walk, timePerFrame: 0.1)
         run(SKAction.repeatForever(walkAnimation))
-        let walk = SKAction.move(by: .init(dx: 5000 * direction, dy: 0), duration: duration)
-        run(walk, withKey: "movement")
+        
+        let enemyTowerPosition: CGPoint = isEnemy ? .zero : .init(x: 3000, y: 0)
+        let currentDistance: CGFloat = sqrt(pow(enemyTowerPosition.x - position.x, 2))
+        let duration: TimeInterval = (currentDistance * timeToWalkToEnemyBase) / 3000
+        let move = SKAction.move(
+            to: enemyTowerPosition,
+            duration: duration
+        )
+        
+        run(move, withKey: "movement")
     }
     
-    // When someone else starts attacking
     func attack() {
-        removeAction(forKey: "movement")
-        let attackAnimation = SKAction.animate(with: attackFrames, timePerFrame: 0.1)
+        guard health > 0 else {
+            print("\(isEnemy ? "Orc is" : "Troop is") attacking and dead")
+            return
+        }
+        removeAllActions()
+        let attackAnimation = SKAction.animate(with: animations.attack, timePerFrame: 0.1)
         run(SKAction.repeatForever(attackAnimation))
     }
     
-    // Returns if troop is still active
-    func takeDamage(dmg: Float) {
+    func takeDamage(dmg: Float16) {
         health -= dmg
         if health <= 0 {
-            print("Player should be removed, knockback")
+            physicsBody = nil // remove physics body to prevent dead ones from staying
+            removeAllActions()
+            
             // knockback
             let direction = isEnemy ? 1 : -1
             let knockback = SKAction.move(
@@ -96,11 +100,47 @@ class Troop: SKSpriteNode {
                 ),
                 duration: isEnemy ? 0.5 : 0.2
             )
-            
+
             run(knockback) {
                 self.removeFromParent()
             }
         }
     }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 }
- 
+
+final class Soldier: BaseTroop {
+    init() {
+        let animations: Animations = .init(
+            walk: (0...7).map { SKTexture(imageNamed: "soldier_walk\($0)") },
+            attack: (0...5).map { SKTexture(imageNamed: "soldier_attack\($0)") }
+        )
+        
+        let attackDmgs: [Float16] = [0, 2, 3.5]
+        
+        super.init(animations: animations, health: 10, attackDmg: attackDmgs, attackFrequency: 0.5, isEnemy: false)
+    }
+    
+    @MainActor required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+final class Orc: BaseTroop {
+    init() {
+        let animations: Animations = .init(
+            walk: (0...7).map { SKTexture(imageNamed: "orc_walk\($0)") },
+            attack: (0...5).map { SKTexture(imageNamed: "orc_attack\($0)") }
+        )
+        let attackDmgs: [Float16] = [0, 2, 3.5]
+        
+        super.init(animations: animations, health: 10, attackDmg: attackDmgs, attackFrequency: 0.5, isEnemy: true)
+    }
+    
+    @MainActor required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}

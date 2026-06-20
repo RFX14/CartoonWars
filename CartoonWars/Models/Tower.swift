@@ -10,8 +10,9 @@ import SpriteKit
 class Tower: SKSpriteNode {
     var frames: [SKTexture]!
     
-    init(size: CGSize, isEnemy: Bool = false) {
-        super.init(texture: nil, color: isEnemy ? .white : .cyan, size: size)
+    init(isEnemy: Bool = false) {
+        super.init(texture: nil, color: isEnemy ? .white : .cyan, size: .init(width: 140, height: 140))
+        self.anchorPoint = .init(x: 0.5, y: 0) // Anchor is now the bottom of the sprite
         
         self.frames = getAnimation(frameCount: 11, name: "tower")
         colorBlendFactor = 1

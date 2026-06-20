@@ -8,53 +8,66 @@
 import SpriteKit
 import GameplayKit
 
+@Observable
 class GameScene: SKScene {
     private var createButton: SKShapeNode!
-    private var bkMenubar: SKShapeNode!
-    private var buttonCount: Int = .zero
-    private let colors: [UIColor] = [
-        .red,
-        .green,
-        .blue,
-        .yellow,
-        .orange,
-        .purple,
-        .cyan,
-        .gray,
-        .magenta,
-        .black
-    ]
-    private var playerTowerPosition: CGPoint = .zero
-    private var enemyTowerPosition: CGPoint = .zero
     
     private let cam = SKCameraNode()
     private var prevTime: TimeInterval = .zero
     private var cleanUp: TimeInterval = .zero
-    
     private var attacks: [AttackPair] = []
     
+    override init(size: CGSize) {
+        super.init(size: size)
+        scene?.scaleMode = .aspectFill
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
     override func didMove(to view: SKView) {
-        let bounds: CGRect = .init(origin: .zero, size: .init(width: 4000, height: 4000))
-        let xRange = SKRange(lowerLimit: bounds.minX - 600,
-                             upperLimit: bounds.maxX - 650)
-        let yRange = SKRange(lowerLimit: bounds.minY,
-                             upperLimit: bounds.maxY - view.bounds.height / 2)
-
-        let boundConstraint = SKConstraint.positionX(xRange, y: yRange)
-        
         self.camera = cam
-        self.camera?.constraints = [boundConstraint]
-        self.camera?.position = .init(x: -300, y: camera?.position.y ?? 0)
         addChild(cam)
-        attacks.reserveCapacity(200)
+        setupCameraConstraints()
+        
+        attacks.reserveCapacity(500)
         
         createSky()
-        createHUD()
         createClouds()
         createTower()
         createTower(isEnemy: true)
         
         self.physicsWorld.contactDelegate = self
+    }
+    
+    func setupCameraConstraints() {
+        guard let camera = self.camera else { return }
+
+        let uiHeight: CGFloat = 45
+        
+        // 1. Your desired absolute map boundaries
+        let mapLeftEdge: CGFloat = -250
+        let mapRightEdge: CGFloat = 3250
+        
+        // 2. Calculate half of your scene's width
+        let halfScreenWidth = self.size.width / 2
+        
+        // 3. Calculate the true limits for the camera's CENTER point
+        let lowerX = mapLeftEdge + halfScreenWidth
+        let upperX = mapRightEdge - halfScreenWidth
+        
+        // 4. Create the X range using those new center limits
+        let xRange = SKRange(lowerLimit: lowerX, upperLimit: upperX)
+        
+        // 5. Keep your Y-axis locked to the floor (as discussed previously)
+        let groundYPosition: CGFloat = -50
+        let cameraYLock = groundYPosition + (self.size.height / 2) - uiHeight
+        let yRange = SKRange(constantValue: cameraYLock)
+        
+        // 6. Apply both constraints
+        let constraint = SKConstraint.positionX(xRange, y: yRange)
+        camera.constraints = [constraint]
     }
     
     @objc static override var supportsSecureCoding: Bool {
@@ -73,7 +86,7 @@ class GameScene: SKScene {
         }
         
         // Clean up unused attacks to prevent array resizing
-        if attacks.count > 100 && currentTime - cleanUp >= 10 {
+        if attacks.count > 490 && currentTime - cleanUp >= 10 {
             attacks.removeAll(where: { !$0.isActive })
             print("Capacity: \(attacks.capacity)")
             cleanUp = currentTime
@@ -89,12 +102,10 @@ class GameScene: SKScene {
             let nodeB = attacks[idx].nodeB
             if nodeA.reciever.health <= 0 {
                 attacks[idx].isActive = false
-                nodeB.reciever.walk(duration: 20)
-            }
-            
-            if nodeB.reciever.health <= 0 {
+                nodeB.reciever.walk()
+            } else if nodeB.reciever.health <= 0 {
                 attacks[idx].isActive = false
-                nodeA.reciever.walk(duration: 20)
+                nodeA.reciever.walk()
             }
         }
     }
@@ -124,39 +135,15 @@ extension GameScene {
         // Update the camera's position (invert the translation to move camera in direction of drag)
         camera.position.x -= translationX
     }
-    
-    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
-        guard let touch = touches.first else { return }
-        
-        // Get touch in camera space, then convert down to menubar's local space
-        let touchInCam = touch.location(in: cam)
-        let touchInMenubar = CGPoint(
-            x: touchInCam.x - bkMenubar.position.x,
-            y: touchInCam.y - bkMenubar.position.y
-        )
-        
-        for (idx, color) in colors.enumerated() {
-            let name = "create_troop\(idx)"
-            if let button = bkMenubar.childNode(withName: name),
-               button.frame.contains(touchInMenubar) {
-                createTroop(color: color, mass: CGFloat(idx))
-                return
-            }
-        }
-    }
 }
 
 // MARK: Helper Creators
 extension GameScene {
     func createTower(isEnemy: Bool = false) {
-        let w = (size.width + size.height) * 0.1
-        let tower = Tower(size: .init(width: w, height: w), isEnemy: isEnemy)
-        let xPos = ((size.width / 2) + w) * (isEnemy ? 1 : -1) + (isEnemy ? 3000 : 0)
-        let yPos = -(size.height / 2) + (w/2) + w
-        tower.position = .init(x: xPos, y: yPos + 50)
+        let tower = Tower(isEnemy: isEnemy)
+        tower.position = .init(x: isEnemy ? 3000 : 0, y: 0)
         tower.zPosition = 1
-        tower.setScale(3)
-        
+        tower.setScale(2)
         addChild(tower)
     }
     
@@ -164,11 +151,12 @@ extension GameScene {
         for i in 1...6 {
             let cloud = SKSpriteNode(imageNamed: "cloud")
             cloud.zPosition = .greatestFiniteMagnitude
-            let width = cloud.size.width * 1.3
+            cloud.anchorPoint = .init(x: 0.5, y: 0)
+            let width = cloud.size.width * 0.5
             let xPos: CGFloat = (size.width / 2) + CGFloat(i) * width - size.width - 200
-            let yPos: CGFloat = (size.height / 2)
+            let yPos: CGFloat = 400
             cloud.position = .init(x: xPos, y: yPos)
-            cloud.setScale(0.5)
+            cloud.setScale(0.2)
             addChild(cloud)
         }
     }
@@ -181,62 +169,13 @@ extension GameScene {
     }
     
     func createEnemy() {
-        let w = (size.width + size.height) * 0.05
-        let n = Troop(size: .init(width: w, height: w), mass: 5, isEnemy: true)
-        let xPos = size.width + w + 2500
-        let yPos = -(size.height / 2) + (w/2) + w
-        n.zPosition = 2
-        
-        n.position = .init(x: xPos, y: yPos)
-        n.walk(duration: 15)
-        addChild(n)
+        let orc = Orc()
+        addChild(orc)
     }
     
-    func createTroop(color: UIColor = .white, mass: CGFloat) {
-        let w = (size.width + size.height) * 0.05
-        let n = Troop(size: .init(width: w, height: w), color: color, mass: mass)
-        n.health += Float(mass)
-        let xPos = -(size.width / 2) + w
-        let yPos = -(size.height / 2) + (w/2) + w
-        n.zPosition = 2
-        
-        n.position = .init(x: xPos, y: yPos)
-        n.walk(duration: 15 + mass)
-        addChild(n)
-    }
-    
-    private func createHUD() {
-        let w = (size.width + size.height) * 0.05
-        let yPos = -(size.height / 2) + (w/2)
-        
-        // Menu Bar
-        bkMenubar = SKShapeNode(rectOf: CGSize(width: size.width, height: w + 2), cornerRadius: w * 0.3)
-        bkMenubar.position = .init(x: 0, y: yPos)
-        bkMenubar.zPosition = .greatestFiniteMagnitude
-        bkMenubar.lineWidth = 2.5
-        bkMenubar.fillColor = .brown
-        bkMenubar.strokeColor = .white
-        cam.addChild(bkMenubar)
-            
-        createButton = SKShapeNode(rectOf: CGSize(width: w - 1, height: w - 1), cornerRadius: w * 0.3)
-
-        for (idx, color) in colors.enumerated() {
-            createButton(for: "create_troop\(idx)", color: color)
-        }
-    }
-    
-    func createButton(for name: String, color: UIColor) {
-        guard let n = createButton.copy() as? SKShapeNode else { return }
-        let additionPos: CGFloat = n.frame.width * CGFloat(buttonCount + 1)
-        let xPos = -(bkMenubar.frame.width / 2) + additionPos
-        let yPos = -(bkMenubar.frame.height / 2) + (n.frame.width / 2)
-        buttonCount += 1 //update count
-        
-        n.fillColor = color
-        n.strokeColor = color
-        n.position = .init(x: xPos, y: yPos)
-        n.name = name
-        bkMenubar.addChild(n)
+    func createTroop() {
+        let soldier = Soldier()
+        addChild(soldier)
     }
 }
 
@@ -249,18 +188,18 @@ extension GameScene: SKPhysicsContactDelegate {
         
         if collision == requiredMask {
             // Stop the action immediately
-            let nodeA = contact.bodyA.node as? Troop
-            let nodeB = contact.bodyB.node as? Troop
+            let nodeA = contact.bodyA.node as? BaseTroop
+            let nodeB = contact.bodyB.node as? BaseTroop
             
             let attackA2B: Attack = Attack(
                 reciever: nodeB!,
-                dmgs: nodeA!.dmgs,
+                dmgs: nodeA!.attackDmg,
                 frequency: nodeA!.isEnemy ? 1 : 0.4,
             )
             
             let attackB2A: Attack = Attack(
                 reciever: nodeA!,
-                dmgs: nodeB!.dmgs,
+                dmgs: nodeB!.attackDmg,
                 frequency: nodeB!.isEnemy ? 1 : 0.4,
             )
             
