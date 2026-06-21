@@ -7,7 +7,7 @@
 
 import SpriteKit
 
-enum AnimationState {
+enum State {
     case idle, walk, attack, block, death
 }
 

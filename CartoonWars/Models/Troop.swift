@@ -12,6 +12,7 @@ class BaseTroop: SKSpriteNode {
     let isEnemy: Bool
     let attackDmg: [Float16]
     var health: Float16
+    var state: State
     
     /// Private Properties
     private let animations: Animations
@@ -25,6 +26,7 @@ class BaseTroop: SKSpriteNode {
         self.attackFrequency = attackFrequency
         self.isEnemy = isEnemy
         self.timeToWalkToEnemyBase = timeToWalkToEnemyBase
+        self.state = .idle
         
         super.init(texture: nil, color: .white, size: .init(width: 64, height: 64))
         self.anchorPoint = .init(x: 0.5, y: 0.25) // Anchor is now the bottom of the sprite
@@ -35,6 +37,19 @@ class BaseTroop: SKSpriteNode {
         
         setupPhysics()
         walk()
+    }
+    
+    func update(state: State) {
+        switch state {
+        case .walk:
+            walk()
+        case .attack:
+            attack()
+        case .death:
+            death()
+        case .idle, .block:
+            print("Nada")
+        }
     }
     
     private func setupPhysics() {
@@ -58,6 +73,7 @@ class BaseTroop: SKSpriteNode {
         guard health > 0 else { return }
         removeAllActions()
         
+        state = .walk
         let walkAnimation = SKAction.animate(with: animations.walk, timePerFrame: 0.1)
         run(SKAction.repeatForever(walkAnimation))
         
@@ -78,6 +94,7 @@ class BaseTroop: SKSpriteNode {
     func death() {
         physicsBody = nil // remove physics body to prevent dead ones from staying
         removeAllActions()
+        state = .death
         
         // knockback
         let direction = isEnemy ? 1 : -1
@@ -101,6 +118,7 @@ class BaseTroop: SKSpriteNode {
         guard health > 0 else { return }
         removeAllActions()
         
+        state = .attack
         let attackAnimation = SKAction.animate(with: animations.attack, timePerFrame: 0.1)
         run(SKAction.repeatForever(attackAnimation))
     }

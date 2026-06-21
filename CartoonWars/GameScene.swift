@@ -112,6 +112,11 @@ class GameScene: SKScene {
     
     // Performs attack
     func attack(_ attack: inout Attack, currentTime: TimeInterval) {
+        if attack.reciever.state != .attack {
+            attack.reciever.attack()
+        }
+        
+        
         if currentTime - attack.prevHit >= attack.frequency {
             let dmg = attack.dmgs.randomElement()!
             attack.reciever.takeDamage(dmg: dmg)
