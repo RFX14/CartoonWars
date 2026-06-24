@@ -33,11 +33,9 @@ struct GameView: View {
     var body: some View {
         // ZStack layers views on top of each other (bottom-to-top)
         ZStack {
-            // 2. The Base Layer: Your SpriteKit Game
-            SpriteView(scene: game, preferredFramesPerSecond: 120, debugOptions: [.showsFPS])
+            SpriteView(scene: game, preferredFramesPerSecond: 120, debugOptions: [.showsFPS, .showsPhysics])
                 .ignoresSafeArea() // Pushes the game world behind the notch/home bar
             
-            // 3. The Top Layer: Your SwiftUI HUD
             VStack {
                 HStack {
                     Text("Gold: 500")
@@ -55,7 +53,12 @@ struct GameView: View {
                 
                 Spacer() // Pushes the HUD up to the top of the screen
             }
+            
             HStack(alignment: .center) {
+                Slider(value: $game.tower.angle, in: 0...1)
+                    .frame(maxWidth: 200)
+                    .rotationEffect(.degrees(-90))
+                
                 Spacer()
                 ZStack {
                     RoundedRectangle(cornerRadius: 10)
@@ -73,6 +76,7 @@ struct GameView: View {
                 }
                 .frame(width: uiHeight, height: uiHeight)
             }
+            .padding(.leading, -50)
         }
     }
 }

@@ -7,7 +7,17 @@
 
 import SpriteKit
 
-class BaseTroop: SKSpriteNode {
+protocol Attacker {
+    var attackDmg: [Float16] { get }
+}
+
+protocol DamageReciever {
+    var health: Float16 { get set }
+    func attack()
+    func takeDamage(dmg: Float16)
+}
+
+class BaseTroop: SKSpriteNode, Attacker, DamageReciever {
     /// Public Properties
     let isEnemy: Bool
     let attackDmg: [Float16]
@@ -36,25 +46,15 @@ class BaseTroop: SKSpriteNode {
         self.zPosition = 2
         
         setupPhysics()
-        walk()
-    }
-    
-    func update(state: State) {
-        switch state {
-        case .walk:
-            walk()
-        case .attack:
-            attack()
-        case .death:
-            death()
-        case .idle, .block:
-            print("Nada")
-        }
+        walk() 
     }
     
     private func setupPhysics() {
         // Create the physics body matching the sprite's size
-        self.physicsBody = SKPhysicsBody(rectangleOf: .init(width: 50, height: 50))
+        self.physicsBody = SKPhysicsBody(
+            rectangleOf: .init(width: 35, height: 35),
+            center: .init(x: .zero, y: 50)
+        )
         self.physicsBody?.categoryBitMask =  isEnemy ? PhysicsCategory.Enemy.rawValue : PhysicsCategory.Player.rawValue
         self.physicsBody?.contactTestBitMask = isEnemy ? PhysicsCategory.Player.rawValue : PhysicsCategory.Enemy.rawValue
         self.physicsBody?.collisionBitMask = PhysicsCategory.None.rawValue

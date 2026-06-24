@@ -16,6 +16,7 @@ class GameScene: SKScene {
     private var prevTime: TimeInterval = .zero
     private var cleanUp: TimeInterval = .zero
     private var attacks: [AttackPair] = []
+    var tower: Tower = Tower()
     
     override init(size: CGSize) {
         super.init(size: size)
@@ -35,7 +36,7 @@ class GameScene: SKScene {
         
         createSky()
         createClouds()
-        createTower()
+        addChild(tower)
         createTower(isEnemy: true)
         
         self.physicsWorld.contactDelegate = self
@@ -80,8 +81,11 @@ class GameScene: SKScene {
     
     override func update(_ currentTime: TimeInterval) {
         // Create new enemy every X secs
-        if currentTime - prevTime >= 0.5 {
+        if currentTime - prevTime >= 0.25 {
             createEnemy()
+            if tower.enableArrow {
+                tower.shootArrow()
+            }
             prevTime = currentTime
         }
         
@@ -146,9 +150,9 @@ extension GameScene {
 extension GameScene {
     func createTower(isEnemy: Bool = false) {
         let tower = Tower(isEnemy: isEnemy)
-        tower.position = .init(x: isEnemy ? 3000 : 0, y: 0)
-        tower.zPosition = 1
-        tower.setScale(2)
+        if !isEnemy {
+            self.tower = tower
+        }
         addChild(tower)
     }
     
@@ -187,11 +191,13 @@ extension GameScene {
 // MARK: Physics Stuff
 extension GameScene: SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
-        // Check if the player collided with the obstacle
-        let collision = contact.bodyA.categoryBitMask | contact.bodyB.categoryBitMask
-        let requiredMask = PhysicsCategory.Player.rawValue | PhysicsCategory.Enemy.rawValue
+        let contactA = contact.bodyA.categoryBitMask
+        let contactB = contact.bodyB.categoryBitMask
         
-        if collision == requiredMask {
+        let collision = contactA | contactB
+        let playerEnemyContact = PhysicsCategory.Player.rawValue | PhysicsCategory.Enemy.rawValue
+        
+        if collision == playerEnemyContact {
             // Stop the action immediately
             let nodeA = contact.bodyA.node as? BaseTroop
             let nodeB = contact.bodyB.node as? BaseTroop
@@ -219,7 +225,19 @@ extension GameScene: SKPhysicsContactDelegate {
             // Attacking animation
             nodeA?.attack()
             nodeB?.attack()
-            // Handle your collision logic (e.g., bounce, explosion, game over)
+        } else if contactA == PhysicsCategory.Arrow.rawValue {
+            guard let nodeA = contact.bodyA.node as? Arrow else { return }
+            guard let nodeB = contact.bodyB.node as? DamageReciever else { return }
+            
+            nodeB.takeDamage(dmg: nodeA.attackDmg.first!)
+            
+            nodeA.removeFromParent()
+        } else if contactB == PhysicsCategory.Arrow.rawValue {
+            guard let nodeB = contact.bodyB.node as? Arrow else { return }
+            guard let nodeA = contact.bodyA.node as? DamageReciever else { return }
+            
+            nodeA.takeDamage(dmg: nodeB.attackDmg.first!)
+            nodeB.removeFromParent()
         }
     }
 }
