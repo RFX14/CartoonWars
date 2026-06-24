@@ -17,6 +17,7 @@ class Tower: SKSpriteNode {
     init(isEnemy: Bool = false) {
         self.angle = 0
         self.attackDmg = [1, 3]
+        self.enableArrow = false
         
         super.init(texture: nil, color: isEnemy ? .white : .cyan, size: .init(width: 140, height: 140))
         self.anchorPoint = .init(x: 0.5, y: 0) // Anchor is now the bottom of the sprite
@@ -65,7 +66,7 @@ class Arrow: SKSpriteNode, Attacker {
     let attackDmg: [Float16]
     
     init(angle: Angle) {
-        attackDmg = [30]
+        attackDmg = [5]
         super.init(
             texture: .init(imageNamed: "arrow"),
             color: .white,

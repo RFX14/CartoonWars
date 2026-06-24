@@ -51,32 +51,59 @@ struct GameView: View {
                     .padding()
                 }
                 
-                Spacer() // Pushes the HUD up to the top of the screen
-            }
-            
-            HStack(alignment: .center) {
-                Slider(value: $game.tower.angle, in: 0...1)
-                    .frame(maxWidth: 200)
-                    .rotationEffect(.degrees(-90))
+                Spacer()
+                
+                HStack {
+                    Slider(value: $game.tower.angle, in: 0...1)
+                        .frame(maxWidth: 200)
+                        .rotationEffect(.degrees(-90))
+                        .padding(.leading, -50)
+                    
+                    Spacer()
+                    
+                    VStack {
+                        GameButton(
+                            text: "Soldier",
+                            color: .red,
+                            action: {
+                            game.createTroop()
+                        })
+                    }.frame(width: uiHeight, height: uiHeight)
+                }
                 
                 Spacer()
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .foregroundStyle(.black)
-                    Button(action: {
-                        game.createTroop()
-                    }, label: {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 10)
-                                .foregroundStyle(.red)
-                            Text("Soldier")
-                                .bold()
-                        }
-                    })
+                
+                HStack {
+                    Spacer()
+                    
+                    GameButton(
+                        text: "Arrow",
+                        color: .blue,
+                        action: {
+                            game.tower.enableArrow.toggle()
+                    }).frame(width: uiHeight, height: uiHeight)
                 }
-                .frame(width: uiHeight, height: uiHeight)
             }
-            .padding(.leading, -50)
         }
+    }
+}
+
+struct GameButton: View {
+    let text: String
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: {
+            action()
+        }, label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .foregroundStyle(color)
+                Text(text)
+                    .foregroundStyle(.white)
+                    .bold()
+            }
+        })
     }
 }
