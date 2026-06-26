@@ -60,6 +60,15 @@ class Tower: SKSpriteNode {
 
         arrow.physicsBody?.applyImpulse(CGVector(dx: dx, dy: dy))
     }
+    
+    func place<T: Upgradable>(troop: Troop<T>) {
+        switch troop {
+        case .soldier:
+            parent?.addChild(Soldier())
+        case .orc:
+            parent?.addChild(Orc())
+        }
+    }
 }
 
 class Arrow: SKSpriteNode, Attacker {

@@ -17,32 +17,26 @@ protocol DamageReciever {
     func takeDamage(dmg: Float16)
 }
 
-class BaseTroop: SKSpriteNode, Attacker, DamageReciever {
+class BaseTroop: SKSpriteNode {
     /// Public Properties
     let isEnemy: Bool
-    let attackDmg: [Float16]
-    var health: Float16
-    var state: State
+    var stats: Stats
+    var state: TroopState
     
     /// Private Properties
     private let animations: Animations
-    private let attackFrequency: TimeInterval
-    private let timeToWalkToEnemyBase: TimeInterval  // Secs
     
-    init(animations: Animations, health: Float16, timeToWalkToEnemyBase: TimeInterval = 15, attackDmg: [Float16], attackFrequency: TimeInterval, isEnemy: Bool) {
+    init(stats: Stats, animations: Animations, isEnemy: Bool) {
+        self.stats = stats
         self.animations = animations
-        self.health = health
-        self.attackDmg = attackDmg
-        self.attackFrequency = attackFrequency
         self.isEnemy = isEnemy
-        self.timeToWalkToEnemyBase = timeToWalkToEnemyBase
         self.state = .idle
         
         super.init(texture: nil, color: .white, size: .init(width: 64, height: 64))
         self.anchorPoint = .init(x: 0.5, y: 0.25) // Anchor is now the bottom of the sprite
         self.setScale(3)
         self.xScale = isEnemy ? -3 : 3
-        self.position = isEnemy ? .init(x: 3000, y: 0) : .zero
+        self.position = isEnemy ? .init(x: 3000, y: .zero) : .zero
         self.zPosition = 2
         
         setupPhysics()
@@ -70,7 +64,7 @@ class BaseTroop: SKSpriteNode, Attacker, DamageReciever {
     }
     
     func walk() {
-        guard health > 0 else { return }
+        guard stats.health > 0 else { return }
         removeAllActions()
         
         state = .walk
@@ -80,7 +74,7 @@ class BaseTroop: SKSpriteNode, Attacker, DamageReciever {
         let enemyTowerPosition: CGPoint = isEnemy ? .zero : .init(x: 3000, y: 0)
         let currentDistance: CGFloat = sqrt(pow(enemyTowerPosition.x - position.x, 2))
         
-        let duration: TimeInterval = (currentDistance * timeToWalkToEnemyBase) / 3000
+        let duration: TimeInterval = (currentDistance * stats.speed) / 3000
         let move = SKAction.move(
             to: enemyTowerPosition,
             duration: duration
@@ -115,7 +109,7 @@ class BaseTroop: SKSpriteNode, Attacker, DamageReciever {
     }
     
     func attack() {
-        guard health > 0 else { return }
+        guard stats.health > 0 else { return }
         removeAllActions()
         
         state = .attack
@@ -124,8 +118,8 @@ class BaseTroop: SKSpriteNode, Attacker, DamageReciever {
     }
     
     func takeDamage(dmg: Float16) {
-        health -= dmg
-        if health <= 0 {
+        stats.health -= dmg
+        if stats.health <= 0 {
             death()
         }
     }
@@ -135,34 +129,51 @@ class BaseTroop: SKSpriteNode, Attacker, DamageReciever {
     }
 }
 
-final class Soldier: BaseTroop {
-    init() {
-        let animations: Animations = .init(
-            walk: (0...7).map { SKTexture(imageNamed: "soldier_walk\($0)") },
-            attack: (0...5).map { SKTexture(imageNamed: "soldier_attack\($0)") },
-            death: (0...3).map { SKTexture(imageNamed: "soldier_death\($0)") }
-        )
+final class Soldier: BaseTroop, Upgradable {
+    init(stats: Stats? = nil, animations: Animations? = nil) {
+        let animations: Animations = if let animations {
+            animations
+        } else {
+            .init(
+                walk: (0...7).map { SKTexture(imageNamed: "soldier_walk\($0)") },
+                attack: (0...5).map { SKTexture(imageNamed: "soldier_attack\($0)") },
+                death: (0...3).map { SKTexture(imageNamed: "soldier_death\($0)") }
+            )
+        }
         
-        let attackDmgs: [Float16] = [0, 2, 3.5]
+        let stats: Stats = if let stats {
+            stats
+        } else {
+            .init(speed: 15, attackFrequency: 0.5, cooldown: 0.25, attackDmg: [0, 2, 3.5], health: 10)
+        }
         
-        super.init(animations: animations, health: 10, attackDmg: attackDmgs, attackFrequency: 0.5, isEnemy: false)
+        super.init(stats: stats, animations: animations, isEnemy: false)
     }
-    
+        
     @MainActor required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 }
 
-final class Orc: BaseTroop {
-    init() {
-        let animations: Animations = .init(
-            walk: (0...7).map { SKTexture(imageNamed: "orc_walk\($0)") },
-            attack: (0...5).map { SKTexture(imageNamed: "orc_attack\($0)") },
-            death: (0...3).map { SKTexture(imageNamed: "orc_death\($0)") }
-        )
-        let attackDmgs: [Float16] = [0, 2, 3.5]
+final class Orc: BaseTroop, Upgradable {
+    init(stats: Stats? = nil, animations: Animations? = nil) {
+        let animations: Animations = if let animations {
+            animations
+        } else {
+            .init(
+                walk: (0...7).map { SKTexture(imageNamed: "orc_walk\($0)") },
+                attack: (0...5).map { SKTexture(imageNamed: "orc_attack\($0)") },
+                death: (0...3).map { SKTexture(imageNamed: "orc_death\($0)") }
+            )
+        }
         
-        super.init(animations: animations, health: 10, attackDmg: attackDmgs, attackFrequency: 0.5, isEnemy: true)
+        let stats: Stats = if let stats {
+            stats
+        } else {
+            .init(speed: 18, attackFrequency: 0.75, cooldown: 0.25, attackDmg: [0, 2.5, 4], health: 11)
+        }
+        
+        super.init(stats: stats, animations: animations, isEnemy: true)
     }
     
     @MainActor required init?(coder aDecoder: NSCoder) {

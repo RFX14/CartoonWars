@@ -13,7 +13,19 @@ struct GameView: View {
     @Environment(\.horizontalSizeClass) var horiSize
     @Environment(\.verticalSizeClass) var vertSize
 
-    @State var game: GameScene = GameScene(size: CGSize(width: 960, height: 540))
+    @State var interface: GameInterface
+    @State var game: GameScene
+    
+    init() {
+        self._interface = State(wrappedValue: GameInterface())
+        self._game = State(wrappedValue: GameScene(
+            size: .init(
+                width: 960,
+                height: 540
+            ),
+            playerTower: _interface.wrappedValue.tower
+        ))
+    }
     
     var uiHeight: CGFloat {
         return switch (horiSize, vertSize) {
@@ -29,6 +41,12 @@ struct GameView: View {
             100
         }
     }
+    var gold: Int {
+        interface.gold
+    }
+    var mana: Int {
+        interface.mana
+    }
 
     var body: some View {
         // ZStack layers views on top of each other (bottom-to-top)
@@ -38,7 +56,12 @@ struct GameView: View {
             
             VStack {
                 HStack {
-                    Text("Gold: 500")
+                    Text("Mana: \(mana)")
+                        .font(.headline)
+                        .foregroundColor(.yellow)
+                        .padding()
+                    
+                    Text("Gold: \(gold)")
                         .font(.headline)
                         .foregroundColor(.yellow)
                         .padding()
@@ -54,7 +77,7 @@ struct GameView: View {
                 Spacer()
                 
                 HStack {
-                    Slider(value: $game.tower.angle, in: 0...1)
+                    Slider(value: $interface.tower.angle, in: 0...1)
                         .frame(maxWidth: 200)
                         .rotationEffect(.degrees(-90))
                         .padding(.leading, -50)
@@ -66,7 +89,7 @@ struct GameView: View {
                             text: "Soldier",
                             color: .red,
                             action: {
-                            game.createTroop()
+                                interface.place(troop: Troop<Soldier>.soldier)
                         })
                     }.frame(width: uiHeight, height: uiHeight)
                 }

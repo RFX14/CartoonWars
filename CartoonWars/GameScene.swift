@@ -16,10 +16,13 @@ class GameScene: SKScene {
     private var prevTime: TimeInterval = .zero
     private var cleanUp: TimeInterval = .zero
     private var attacks: [AttackPair] = []
-    var tower: Tower = Tower()
+    let tower: Tower
+    let enemyTower: Tower = Tower(isEnemy: true)
     
-    override init(size: CGSize) {
+    init(size: CGSize, playerTower: Tower) {
+        self.tower = playerTower
         super.init(size: size)
+        
         scene?.scaleMode = .aspectFill
     }
     
@@ -37,7 +40,7 @@ class GameScene: SKScene {
         createSky()
         createClouds()
         addChild(tower)
-        createTower(isEnemy: true)
+        addChild(enemyTower)
         
         self.physicsWorld.contactDelegate = self
     }
@@ -82,7 +85,7 @@ class GameScene: SKScene {
     override func update(_ currentTime: TimeInterval) {
         // Create new enemy every X secs
         if currentTime - prevTime >= 0.25 {
-            createEnemy()
+            enemyTower.place(troop: Troop<Orc>.orc)
             if tower.enableArrow {
                 tower.shootArrow()
             }
@@ -104,10 +107,10 @@ class GameScene: SKScene {
             // Ensure at least one of the nodes is alive to keep attacking
             let nodeA = attacks[idx].nodeA
             let nodeB = attacks[idx].nodeB
-            if nodeA.reciever.health <= 0 {
+            if nodeA.reciever.stats.health <= 0 {
                 attacks[idx].isActive = false
                 nodeB.reciever.walk()
-            } else if nodeB.reciever.health <= 0 {
+            } else if nodeB.reciever.stats.health <= 0 {
                 attacks[idx].isActive = false
                 nodeA.reciever.walk()
             }
@@ -148,14 +151,6 @@ extension GameScene {
 
 // MARK: Helper Creators
 extension GameScene {
-    func createTower(isEnemy: Bool = false) {
-        let tower = Tower(isEnemy: isEnemy)
-        if !isEnemy {
-            self.tower = tower
-        }
-        addChild(tower)
-    }
-    
     func createClouds() {
         for i in 1...6 {
             let cloud = SKSpriteNode(imageNamed: "cloud")
@@ -176,16 +171,6 @@ extension GameScene {
         sky.setScale(0.3)
         cam.addChild(sky)
     }
-    
-    func createEnemy() {
-        let orc = Orc()
-        addChild(orc)
-    }
-    
-    func createTroop() {
-        let soldier = Soldier()
-        addChild(soldier)
-    }
 }
 
 // MARK: Physics Stuff
@@ -204,13 +189,13 @@ extension GameScene: SKPhysicsContactDelegate {
             
             let attackA2B: Attack = Attack(
                 reciever: nodeB!,
-                dmgs: nodeA!.attackDmg,
+                dmgs: nodeA!.stats.attackDmg,
                 frequency: nodeA!.isEnemy ? 1 : 0.4,
             )
             
             let attackB2A: Attack = Attack(
                 reciever: nodeA!,
-                dmgs: nodeB!.attackDmg,
+                dmgs: nodeB!.stats.attackDmg,
                 frequency: nodeB!.isEnemy ? 1 : 0.4,
             )
             
