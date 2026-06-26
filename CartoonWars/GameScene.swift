@@ -25,6 +25,11 @@ class GameScene: SKScene {
         scene?.scaleMode = .aspectFill
     }
     
+    func togglePause() {
+        isPaused.toggle()
+        physicsWorld.speed = isPaused ? .zero : 1
+    }
+    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }

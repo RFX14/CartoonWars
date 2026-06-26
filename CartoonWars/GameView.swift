@@ -57,8 +57,11 @@ struct GameView: View {
     var body: some View {
         // ZStack layers views on top of each other (bottom-to-top)
         ZStack {
-            SpriteView(scene: game, preferredFramesPerSecond: 120, debugOptions: [.showsFPS, .showsPhysics])
-                .ignoresSafeArea() // Pushes the game world behind the notch/home bar
+            SpriteView(
+                scene: game,
+                preferredFramesPerSecond: 120,
+                debugOptions: [.showsFPS, .showsPhysics]
+            ).ignoresSafeArea() // Pushes the game world behind the notch/home bar
             
             VStack {
                 HStack {
@@ -75,7 +78,7 @@ struct GameView: View {
                     Spacer() // Pushes the next item to the right edge
                     
                     Button("Pause") {
-                        print("Pause Button Tapped")
+                        game.togglePause()
                     }
                     .padding()
                 }
