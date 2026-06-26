@@ -33,12 +33,3 @@ struct TroopUpgrade {
     let animations: Animations
     let description: String?
 }
-
-class Shop {
-    /// Returns a new troop with upgraded stats
-    func upgrade<T: Upgradable>(troop: Troop<T>) -> T? {
-        let newTroop = troop.type.init(stats: nil, animations: nil)
-        
-        return newTroop
-    }
-}

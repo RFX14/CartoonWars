@@ -9,9 +9,9 @@ internal import SpriteKit
 
 struct Attack {
     let reciever: BaseTroop
-    var dmgs: [Float16]
     let frequency: TimeInterval
-    var prevHit: TimeInterval = 0
+    var prevHit: TimeInterval = .zero
+    var dmgs: [Float16]
 }
 
 struct AttackPair {

@@ -8,10 +8,7 @@
 internal import SpriteKit
 import GameplayKit
 
-@Observable
 class GameScene: SKScene {
-    private var createButton: SKShapeNode!
-    
     private let cam = SKCameraNode()
     private var prevTime: TimeInterval = .zero
     private var cleanUp: TimeInterval = .zero
@@ -155,14 +152,14 @@ extension GameScene: SKPhysicsContactDelegate {
             
             let attackA2B: Attack = Attack(
                 reciever: nodeB,
-                dmgs: nodeA.stats.attackDmg,
                 frequency: nodeA.isEnemy ? 1 : 0.4,
+                dmgs: nodeA.stats.attackDmg,
             )
             
             let attackB2A: Attack = Attack(
                 reciever: nodeA,
-                dmgs: nodeB.stats.attackDmg,
                 frequency: nodeB.isEnemy ? 1 : 0.4,
+                dmgs: nodeB.stats.attackDmg,
             )
             
             let pair: AttackPair = .init(

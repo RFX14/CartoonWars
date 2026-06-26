@@ -49,7 +49,6 @@ class Tower: SKSpriteNode {
         return frames
     }
     
-    #warning("Use SKAction as that will make multiplayer easier I believe")
     func shootArrow() {
         let arrow = Arrow(angle: .degrees(60 * angle))
         addChild(arrow)

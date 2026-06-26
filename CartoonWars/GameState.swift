@@ -15,10 +15,10 @@ internal import SpriteKit
 class GameState {
     private var attacks: [AttackPair] = []
     private var prevFrontLine: Double? = nil
-    var frontLineIsStuck: Bool = false
-    
     private var lastCleanUp: TimeInterval = .zero
     private var lastFrontLineCheck: TimeInterval = .zero
+    
+    var frontLineIsStuck: Bool = false
     
     init() {
         attacks.reserveCapacity(500)
@@ -47,27 +47,15 @@ class GameState {
         attacks.append(attack)
     }
     
-    // Performs attack
-    private func attack(_ attack: inout Attack, currentTime: TimeInterval) {
-        if attack.reciever.state != .attack {
-            attack.reciever.attack()
-        }
-        
-        
-        if currentTime - attack.prevHit >= attack.frequency {
-            let dmg = attack.dmgs.randomElement()!
-            attack.reciever.takeDamage(dmg: dmg)
-            attack.prevHit = currentTime
-        }
-    }
-    
     func cleanUp(for currentTime: TimeInterval) {
         guard currentTime - lastCleanUp > 10 else { return }
         
-        if Double(attacks.count) > Double(attacks.capacity) * 0.9 {
-            attacks.removeAll(where: { !$0.isActive })
-            lastCleanUp = currentTime
-        }
+        let count: Double = Double(attacks.count)
+        let capacity: Double = Double(attacks.capacity)
+        guard count > capacity * 0.9 else { return }
+        
+        attacks.removeAll(where: { !$0.isActive })
+        lastCleanUp = currentTime
     }
     
     func computeFrontLine(for currentTime: TimeInterval) {
@@ -107,6 +95,23 @@ class GameState {
         } else {
             print("STUCK!!")
             frontLineIsStuck = true
+        }
+    }
+}
+
+// Private things
+extension GameState {
+    // Performs attack
+    private func attack(_ attack: inout Attack, currentTime: TimeInterval) {
+        if attack.reciever.state != .attack {
+            attack.reciever.attack()
+        }
+        
+        
+        if currentTime - attack.prevHit >= attack.frequency {
+            let dmg = attack.dmgs.randomElement()!
+            attack.reciever.takeDamage(dmg: dmg)
+            attack.prevHit = currentTime
         }
     }
 }

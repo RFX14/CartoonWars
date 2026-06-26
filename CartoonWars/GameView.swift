@@ -14,7 +14,7 @@ struct GameView: View {
     @Environment(\.verticalSizeClass) var vertSize
 
     @State var interface: GameInterface
-    @State var game: GameScene
+    let game: GameScene
     
     init() {
         let gameState = GameState()
@@ -23,15 +23,13 @@ struct GameView: View {
                 gameState: gameState
             )
         )
-        self._game = State(
-            wrappedValue: GameScene(
-                size: .init(
-                    width: 960,
-                    height: 540
-                ),
-                playerTower: _interface.wrappedValue.tower,
-                gameState: gameState
-            )
+        self.game = GameScene(
+            size: .init(
+                width: 960,
+                height: 540
+            ),
+            playerTower: _interface.wrappedValue.tower,
+            gameState: gameState
         )
     }
     
@@ -111,7 +109,7 @@ struct GameView: View {
                         text: "Arrow",
                         color: .blue,
                         action: {
-                            game.tower.enableArrow.toggle()
+                            interface.toggleArrows()
                     }).frame(width: uiHeight, height: uiHeight)
                 }
             }
