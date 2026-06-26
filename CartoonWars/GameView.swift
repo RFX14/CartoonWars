@@ -13,8 +13,11 @@ struct GameView: View {
     @Environment(\.horizontalSizeClass) var horiSize
     @Environment(\.verticalSizeClass) var vertSize
 
-    @State var interface: GameInterface
-    let game: GameScene
+    @State private var interface: GameInterface
+    private let enemyInterface: GameInterface
+    
+    private let game: GameScene
+    private let cpu: ComputerPlayer?
     
     init() {
         let gameState = GameState()
@@ -23,12 +26,16 @@ struct GameView: View {
                 gameState: gameState
             )
         )
+        self.enemyInterface = GameInterface(gameState: gameState, isEnemy: true)
+        self.cpu = ComputerPlayer(gameState: gameState, interface: enemyInterface)
+        
         self.game = GameScene(
             size: .init(
                 width: 960,
                 height: 540
             ),
             playerTower: _interface.wrappedValue.tower,
+            enemyTower: enemyInterface.tower,
             gameState: gameState
         )
     }
@@ -79,8 +86,7 @@ struct GameView: View {
                     
                     Button("Pause") {
                         game.togglePause()
-                    }
-                    .padding()
+                    }.padding()
                 }
                 
                 Spacer()

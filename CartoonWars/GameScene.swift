@@ -14,12 +14,13 @@ class GameScene: SKScene {
     private var cleanUp: TimeInterval = .zero
     
     let tower: Tower
-    let enemyTower: Tower = Tower(isEnemy: true)
+    let enemyTower: Tower
     let gameState: GameState
     
-    init(size: CGSize, playerTower: Tower, gameState: GameState) {
+    init(size: CGSize, playerTower: Tower, enemyTower: Tower, gameState: GameState) {
         self.tower = playerTower
         self.gameState = gameState
+        self.enemyTower = enemyTower
         super.init(size: size)
         
         scene?.scaleMode = .aspectFill
@@ -87,7 +88,6 @@ class GameScene: SKScene {
     override func update(_ currentTime: TimeInterval) {
         // Create new enemy every X secs
         if currentTime - prevTime >= 0.25 {
-            enemyTower.place(troop: Troop<Orc>.orc)
             if tower.enableArrow {
                 tower.shootArrow()
             }
