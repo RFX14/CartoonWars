@@ -71,7 +71,7 @@ class Tower: SKSpriteNode {
     }
 }
 
-class Arrow: SKSpriteNode, Attacker {
+class Arrow: SKSpriteNode {
     let attackDmg: [Float16]
     
     init(angle: Angle) {

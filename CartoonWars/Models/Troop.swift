@@ -7,16 +7,6 @@
 
 import SpriteKit
 
-protocol Attacker {
-    var attackDmg: [Float16] { get }
-}
-
-protocol DamageReciever {
-    var health: Float16 { get set }
-    func attack()
-    func takeDamage(dmg: Float16)
-}
-
 class BaseTroop: SKSpriteNode {
     /// Public Properties
     let isEnemy: Bool

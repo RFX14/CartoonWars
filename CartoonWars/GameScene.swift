@@ -212,14 +212,14 @@ extension GameScene: SKPhysicsContactDelegate {
             nodeB?.attack()
         } else if contactA == PhysicsCategory.Arrow.rawValue {
             guard let nodeA = contact.bodyA.node as? Arrow else { return }
-            guard let nodeB = contact.bodyB.node as? DamageReciever else { return }
+            guard let nodeB = contact.bodyB.node as? BaseTroop else { return }
             
             nodeB.takeDamage(dmg: nodeA.attackDmg.first!)
             
             nodeA.removeFromParent()
         } else if contactB == PhysicsCategory.Arrow.rawValue {
             guard let nodeB = contact.bodyB.node as? Arrow else { return }
-            guard let nodeA = contact.bodyA.node as? DamageReciever else { return }
+            guard let nodeA = contact.bodyA.node as? BaseTroop else { return }
             
             nodeA.takeDamage(dmg: nodeB.attackDmg.first!)
             nodeB.removeFromParent()
