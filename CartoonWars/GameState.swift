@@ -14,7 +14,7 @@ internal import SpriteKit
 // - Global timer?
 class GameState {
     private var attacks: [AttackPair] = []
-    private var prevFrontLine: CGPoint? = nil
+    private var prevFrontLine: Double? = nil
     var frontLineIsStuck: Bool = false
     
     private var lastCleanUp: TimeInterval = .zero
@@ -74,26 +74,19 @@ class GameState {
         guard currentTime - lastFrontLineCheck > 2 else { return }
         
         // Sort all points
-        let points: [CGPoint] = attacks.map {
-            let positionA = $0.nodeA.reciever.position
-            let positionB = $0.nodeB.reciever.position
+        let points: [Double] = attacks.lazy.map {
+            // Only use positionA because when attacking nodeB is in roughly the same position
+            let positionA = $0.nodeA.reciever.position.x
             
-            return (positionA, positionB)
-        }.flatMap {
-            [$0.0, $0.1]
-        }.sorted(by: { $0.x < $1.x })
+            return positionA
+        }.sorted(by: { $0 < $1 })
         
-        guard let maxPoint: CGPoint = points.max(by: {
-            $0.x < $1.x
-        }) else { return }
-        
-        guard let minPoint: CGPoint = points.min(by: {
-            $0.x < $1.x
-        }) else { return }
+        guard let maxPoint: Double = points.last else { return }
+        guard let minPoint: Double = points.first else { return }
         
         // Calculate distance to tower
-        let player1Distance = minPoint.x
-        let player2Distance = 3000 - maxPoint.x
+        let player1Distance = minPoint
+        let player2Distance = 3000 - maxPoint
         
         // New Front Line
         let frontLine = player1Distance < player2Distance ? minPoint : maxPoint
@@ -103,12 +96,12 @@ class GameState {
         }
         
         // Check if there is a prev front line
-        let margin: Double = 100
+        let margin: Double = 110
         guard let prevFrontLine else { return }
-        guard frontLine.x > margin || frontLine.x < (3000 - margin) else { return }
+        guard frontLine > margin || frontLine < (3000 - margin) else { return }
         
         // Check if frontline has moved from previous frontline
-        let distanceBetweenFrontLine = sqrt(pow(frontLine.x - prevFrontLine.x, 2))
+        let distanceBetweenFrontLine = sqrt(pow(frontLine - prevFrontLine, 2))
         if distanceBetweenFrontLine <= margin {
             frontLineIsStuck = false
         } else {
