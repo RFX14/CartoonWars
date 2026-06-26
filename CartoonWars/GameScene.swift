@@ -5,7 +5,7 @@
 //  Created by Josue Rosales on 6/13/26.
 //
 
-import SpriteKit
+internal import SpriteKit
 import GameplayKit
 
 @Observable
@@ -15,12 +15,14 @@ class GameScene: SKScene {
     private let cam = SKCameraNode()
     private var prevTime: TimeInterval = .zero
     private var cleanUp: TimeInterval = .zero
-    private var attacks: [AttackPair] = []
+    
     let tower: Tower
     let enemyTower: Tower = Tower(isEnemy: true)
+    let gameState: GameState
     
-    init(size: CGSize, playerTower: Tower) {
+    init(size: CGSize, playerTower: Tower, gameState: GameState) {
         self.tower = playerTower
+        self.gameState = gameState
         super.init(size: size)
         
         scene?.scaleMode = .aspectFill
@@ -34,9 +36,7 @@ class GameScene: SKScene {
         self.camera = cam
         addChild(cam)
         setupCameraConstraints()
-        
-        attacks.reserveCapacity(500)
-        
+                
         createSky()
         createClouds()
         addChild(tower)
@@ -92,43 +92,9 @@ class GameScene: SKScene {
             prevTime = currentTime
         }
         
-        // Clean up unused attacks to prevent array resizing
-        if attacks.count > 490 && currentTime - cleanUp >= 10 {
-            attacks.removeAll(where: { !$0.isActive })
-            print("Capacity: \(attacks.capacity)")
-            cleanUp = currentTime
-        }
-        
-        for (idx, pair) in attacks.enumerated() where pair.isActive {
-            // Perform Attacks
-            attack(&attacks[idx].nodeA, currentTime: currentTime)
-            attack(&attacks[idx].nodeB, currentTime: currentTime)
-            
-            // Ensure at least one of the nodes is alive to keep attacking
-            let nodeA = attacks[idx].nodeA
-            let nodeB = attacks[idx].nodeB
-            if nodeA.reciever.stats.health <= 0 {
-                attacks[idx].isActive = false
-                nodeB.reciever.walk()
-            } else if nodeB.reciever.stats.health <= 0 {
-                attacks[idx].isActive = false
-                nodeA.reciever.walk()
-            }
-        }
-    }
-    
-    // Performs attack
-    func attack(_ attack: inout Attack, currentTime: TimeInterval) {
-        if attack.reciever.state != .attack {
-            attack.reciever.attack()
-        }
-        
-        
-        if currentTime - attack.prevHit >= attack.frequency {
-            let dmg = attack.dmgs.randomElement()!
-            attack.reciever.takeDamage(dmg: dmg)
-            attack.prevHit = currentTime
-        }
+        gameState.updateAttacks(for: currentTime)
+        gameState.cleanUp(for: currentTime)
+        gameState.computeFrontLine(for: currentTime)
     }
 }
 
@@ -184,19 +150,19 @@ extension GameScene: SKPhysicsContactDelegate {
         
         if collision == playerEnemyContact {
             // Stop the action immediately
-            let nodeA = contact.bodyA.node as? BaseTroop
-            let nodeB = contact.bodyB.node as? BaseTroop
+            guard let nodeA = contact.bodyA.node as? BaseTroop else { return }
+            guard let nodeB = contact.bodyB.node as? BaseTroop else { return }
             
             let attackA2B: Attack = Attack(
-                reciever: nodeB!,
-                dmgs: nodeA!.stats.attackDmg,
-                frequency: nodeA!.isEnemy ? 1 : 0.4,
+                reciever: nodeB,
+                dmgs: nodeA.stats.attackDmg,
+                frequency: nodeA.isEnemy ? 1 : 0.4,
             )
             
             let attackB2A: Attack = Attack(
-                reciever: nodeA!,
-                dmgs: nodeB!.stats.attackDmg,
-                frequency: nodeB!.isEnemy ? 1 : 0.4,
+                reciever: nodeA,
+                dmgs: nodeB.stats.attackDmg,
+                frequency: nodeB.isEnemy ? 1 : 0.4,
             )
             
             let pair: AttackPair = .init(
@@ -205,11 +171,11 @@ extension GameScene: SKPhysicsContactDelegate {
                 isActive: true
             )
             
-            attacks.append(pair)
+            gameState.append(attack: pair)
             
             // Attacking animation
-            nodeA?.attack()
-            nodeB?.attack()
+            nodeA.attack()
+            nodeB.attack()
         } else if contactA == PhysicsCategory.Arrow.rawValue {
             guard let nodeA = contact.bodyA.node as? Arrow else { return }
             guard let nodeB = contact.bodyB.node as? BaseTroop else { return }

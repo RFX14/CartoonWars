@@ -7,7 +7,7 @@
 
 
 import SwiftUI
-import SpriteKit
+internal import SpriteKit
 
 struct GameView: View {
     @Environment(\.horizontalSizeClass) var horiSize
@@ -17,14 +17,22 @@ struct GameView: View {
     @State var game: GameScene
     
     init() {
-        self._interface = State(wrappedValue: GameInterface())
-        self._game = State(wrappedValue: GameScene(
-            size: .init(
-                width: 960,
-                height: 540
-            ),
-            playerTower: _interface.wrappedValue.tower
-        ))
+        let gameState = GameState()
+        self._interface = State(
+            wrappedValue: GameInterface(
+                gameState: gameState
+            )
+        )
+        self._game = State(
+            wrappedValue: GameScene(
+                size: .init(
+                    width: 960,
+                    height: 540
+                ),
+                playerTower: _interface.wrappedValue.tower,
+                gameState: gameState
+            )
+        )
     }
     
     var uiHeight: CGFloat {

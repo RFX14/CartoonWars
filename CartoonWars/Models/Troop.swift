@@ -5,7 +5,7 @@
 //  Created by Josue Rosales on 6/13/26.
 //
 
-import SpriteKit
+internal import SpriteKit
 
 class BaseTroop: SKSpriteNode {
     /// Public Properties

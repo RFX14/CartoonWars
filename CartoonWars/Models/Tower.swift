@@ -5,7 +5,7 @@
 //  Created by Josue Rosales on 6/18/26.
 //
 
-import SpriteKit
+internal import SpriteKit
 import SwiftUI
 
 class Tower: SKSpriteNode {

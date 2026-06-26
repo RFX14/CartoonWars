@@ -5,7 +5,7 @@
 //  Created by Josue Rosales on 6/17/26.
 //
 
-import SpriteKit
+internal import SpriteKit
 
 enum TroopState {
     case idle, walk, attack, block, death

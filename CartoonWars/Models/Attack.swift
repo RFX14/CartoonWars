@@ -5,7 +5,7 @@
 //  Created by Josue Rosales on 6/15/26.
 //
 
-import SpriteKit
+internal import SpriteKit
 
 struct Attack {
     let reciever: BaseTroop

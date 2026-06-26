@@ -6,7 +6,7 @@
 //
 
 import UIKit
-import SpriteKit
+internal import SpriteKit
 import GameplayKit
 
 class GameViewController: UIViewController {
