@@ -14,7 +14,7 @@ struct GameView: View {
     @Environment(\.verticalSizeClass) var vertSize
 
     @State private var interface: GameInterface
-    private let enemyInterface: GameInterface
+    @State private var enemyInterface: GameInterface
     
     private let game: GameScene
     private let cpu: ComputerPlayer?
@@ -22,12 +22,15 @@ struct GameView: View {
     init() {
         let gameState = GameState()
         self._interface = State(
+            wrappedValue: GameInterface(gameState: gameState)
+        )
+        self._enemyInterface = State(
             wrappedValue: GameInterface(
-                gameState: gameState
+                gameState: gameState,
+                isEnemy: true
             )
         )
-        self.enemyInterface = GameInterface(gameState: gameState, isEnemy: true)
-        self.cpu = ComputerPlayer(gameState: gameState, interface: enemyInterface)
+        self.cpu = ComputerPlayer(interface: self._enemyInterface.wrappedValue)
         
         self.game = GameScene(
             size: .init(
@@ -35,8 +38,8 @@ struct GameView: View {
                 height: 540
             ),
             playerTower: _interface.wrappedValue.tower,
-            enemyTower: enemyInterface.tower,
-            gameState: gameState
+            enemyTower: self._enemyInterface.wrappedValue.tower,
+            gameState: gameState, cpu: self.cpu
         )
     }
     
@@ -54,11 +57,14 @@ struct GameView: View {
             100
         }
     }
-    var gold: Int {
+    var gold: Int16 {
         interface.gold
     }
-    var mana: Int {
-        interface.mana
+    var mana: Int16 {
+        interface.mana.value
+    }
+    var maxMana: Int16 {
+        interface.mana.max
     }
 
     var body: some View {
@@ -72,7 +78,11 @@ struct GameView: View {
             
             VStack {
                 HStack {
-                    Text("Mana: \(mana)")
+                    Text("Mana: \(mana)/\(maxMana)")
+                        .font(.headline)
+                        .foregroundColor(.yellow)
+                        .padding()
+                    Text("CPU Mana: \(enemyInterface.mana.value)/\(maxMana)")
                         .font(.headline)
                         .foregroundColor(.yellow)
                         .padding()
@@ -84,7 +94,7 @@ struct GameView: View {
                     
                     Spacer() // Pushes the next item to the right edge
                     
-                    Button("Pause") {
+                    Button(game.isPaused ? "Play" : "Pause") {
                         game.togglePause()
                     }.padding()
                 }
@@ -104,7 +114,7 @@ struct GameView: View {
                             text: "Soldier",
                             color: .red,
                             action: {
-                                interface.place(troop: Troop<Soldier>.soldier)
+                                let _ = interface.place(troop: Troop.soldier)
                         })
                     }.frame(width: uiHeight, height: uiHeight)
                 }

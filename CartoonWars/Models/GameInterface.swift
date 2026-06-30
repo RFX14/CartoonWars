@@ -7,19 +7,73 @@
 
 import SwiftUI
 
-class ComputerPlayer {
-    let interface: GameInterface
+@Observable
+class GameInterface {
+    var gold: Int16
+    var mana: Mana
+    var tower: Tower
+    var gameState: GameState
+    
+    init(gameState: GameState, isEnemy: Bool = false, ) {
+        self.gold = 500
+        self.mana = Mana()
+        self.tower = Tower(isEnemy: isEnemy)
+        self.gameState = gameState
+    }
+    
+    func place(troop: Troop) -> Bool {
+        if mana.spend(on: troop) {
+            if troop.belongsToPlayer1 {
+                gameState.player1Troops[troop]! += 1
+            } else {
+                gameState.player2Troops[troop]! += 1
+            }
+            tower.place(troop: troop)
+            return true
+        }
+        
+        return false
+    }
+    
+    func toggleArrows() {
+        tower.enableArrow.toggle()
+    }
+}
+
+@Observable
+class Mana {
+    private(set) var value: Int16
+    private(set) var max: Int16
+    
     private var task: Task<Void, Never>?
     private let frequency: Duration
     
-    init(gameState: GameState, interface: GameInterface) {
-        self.interface = interface
-        self.frequency = .milliseconds(500)
+    init() {
+        self.value = 0
+        self.max = 100
+        self.frequency = .seconds(1)
+        
         run()
     }
     
     deinit {
         stopTask()
+    }
+    
+    func spend(on troop: Troop) -> Bool {
+        let cost: Int16 = switch troop {
+        case .soldier:
+            1
+        case .orc:
+            2
+        }
+        
+        if value >= cost {
+            value -= cost
+            return true
+        }
+        
+        return false
     }
     
     private func run() {
@@ -29,7 +83,9 @@ class ComputerPlayer {
             while !Task.isCancelled {
                 guard let self = self else { break }
                 
-                takeTurn()
+                if value < max {
+                    value += 1
+                }
                 
                 do {
                     try await Task.sleep(for: frequency)
@@ -40,37 +96,8 @@ class ComputerPlayer {
         }
     }
     
-    private func takeTurn() {
-        interface.place(troop: Troop<Orc>.orc)
-    }
-    
     private func stopTask() {
         task?.cancel()
         task = nil
-    }
-}
-
-@Observable
-class GameInterface {
-    var gold: Int
-    var mana: Int
-    
-    var tower: Tower
-    let gameState: GameState
-    
-    init(gameState: GameState, isEnemy: Bool = false) {
-        self.gameState = gameState
-        self.gold = 500
-        self.mana = 0
-        self.tower = Tower(isEnemy: isEnemy)
-    }
-    
-    // Places a new unit on the ground, SwiftUI responsible for restricting cooldowns
-    func place<T: Upgradable>(troop: Troop<T>) {
-        tower.place(troop: troop)
-    }
-    
-    func toggleArrows() {
-        tower.enableArrow.toggle()
     }
 }

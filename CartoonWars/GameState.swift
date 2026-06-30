@@ -17,11 +17,20 @@ class GameState {
     private var prevFrontLine: Double? = nil
     private var lastCleanUp: TimeInterval = .zero
     private var lastFrontLineCheck: TimeInterval = .zero
+    var player1Troops: [Troop: Int]
+    var player2Troops: [Troop: Int]
     
     var frontLineIsStuck: Bool = false
     
     init() {
         attacks.reserveCapacity(500)
+        player1Troops = [
+            .soldier: 0
+        ]
+        
+        player2Troops = [
+            .orc: 0
+        ]
     }
     
     func updateAttacks(for currentTime: TimeInterval) {
@@ -49,17 +58,18 @@ class GameState {
     
     func cleanUp(for currentTime: TimeInterval) {
         guard currentTime - lastCleanUp > 10 else { return }
+        lastCleanUp = currentTime
         
         let count: Double = Double(attacks.count)
         let capacity: Double = Double(attacks.capacity)
         guard count > capacity * 0.9 else { return }
         
         attacks.removeAll(where: { !$0.isActive })
-        lastCleanUp = currentTime
     }
     
     func computeFrontLine(for currentTime: TimeInterval) {
         guard currentTime - lastFrontLineCheck > 2 else { return }
+        lastFrontLineCheck = currentTime
         
         // Sort all points
         let points: [Double] = attacks.lazy.map {
@@ -93,7 +103,6 @@ class GameState {
         if distanceBetweenFrontLine <= margin {
             frontLineIsStuck = false
         } else {
-            print("STUCK!!")
             frontLineIsStuck = true
         }
     }
@@ -107,10 +116,17 @@ extension GameState {
             attack.reciever.attack()
         }
         
-        
         if currentTime - attack.prevHit >= attack.frequency {
             let dmg = attack.dmgs.randomElement()!
             attack.reciever.takeDamage(dmg: dmg)
+            if attack.reciever.state == .death {
+                let troopType = attack.reciever.type
+                if troopType.belongsToPlayer1 {
+                    player1Troops[troopType]! -= 1
+                } else {
+                    player2Troops[troopType]! -= 1
+                }
+            }
             attack.prevHit = currentTime
         }
     }

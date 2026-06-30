@@ -16,11 +16,13 @@ class GameScene: SKScene {
     let tower: Tower
     let enemyTower: Tower
     let gameState: GameState
+    let cpu: ComputerPlayer?
     
-    init(size: CGSize, playerTower: Tower, enemyTower: Tower, gameState: GameState) {
+    init(size: CGSize, playerTower: Tower, enemyTower: Tower, gameState: GameState, cpu: ComputerPlayer?) {
         self.tower = playerTower
         self.gameState = gameState
         self.enemyTower = enemyTower
+        self.cpu = cpu
         super.init(size: size)
         
         scene?.scaleMode = .aspectFill
@@ -91,6 +93,7 @@ class GameScene: SKScene {
             if tower.enableArrow {
                 tower.shootArrow()
             }
+            cpu?.takeTurn(for: currentTime)
             prevTime = currentTime
         }
         

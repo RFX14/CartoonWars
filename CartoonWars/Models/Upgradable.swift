@@ -7,7 +7,8 @@
 
 import Foundation
 
-protocol Upgradable {
+protocol Upgradable: Hashable {
+    var type: Troop { get }
     init(stats: Stats?, animations: Animations?) // Use default animations if none provided
 }
 
@@ -20,11 +21,25 @@ struct Stats {
 }
 
 // Generics for performance, but consider Shared Protocol if messy later on
-enum Troop<T: Upgradable> {
+enum Troop: CaseIterable {
     case soldier, orc
+
+    var cost: Int16 {
+        switch self {
+        case .soldier:
+            1
+        case .orc:
+            2
+        }
+    }
     
-    var type: T.Type {
-        return T.self
+    var belongsToPlayer1: Bool {
+        switch self {
+        case .soldier:
+            true
+        case .orc:
+            false
+        }
     }
 }
 

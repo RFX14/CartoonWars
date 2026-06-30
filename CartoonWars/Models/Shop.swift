@@ -9,9 +9,14 @@ import Foundation
 
 class Shop {
     /// Returns a new troop with upgraded stats
-    func upgrade<T: Upgradable>(troop: Troop<T>) -> T? {
-        let newTroop = troop.type.init(stats: nil, animations: nil)
+    func upgrade(troop: Troop) -> some Upgradable {
+        let upgraded = switch troop {
+        case .soldier:
+            Soldier(stats: nil, animations: nil)
+        case .orc:
+            Orc(stats: nil, animations: nil)
+        }
         
-        return newTroop
+        return upgraded
     }
 }

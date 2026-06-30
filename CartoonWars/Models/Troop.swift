@@ -7,7 +7,9 @@
 
 internal import SpriteKit
 
-class BaseTroop: SKSpriteNode {
+class BaseTroop: SKSpriteNode, Upgradable {
+    let type: Troop
+    
     /// Public Properties
     let isEnemy: Bool
     var stats: Stats
@@ -16,11 +18,12 @@ class BaseTroop: SKSpriteNode {
     /// Private Properties
     private let animations: Animations
     
-    init(stats: Stats, animations: Animations, isEnemy: Bool) {
+    init(stats: Stats, animations: Animations, isEnemy: Bool, type: Troop) {
         self.stats = stats
         self.animations = animations
         self.isEnemy = isEnemy
         self.state = .idle
+        self.type = type
         
         super.init(texture: nil, color: .white, size: .init(width: 64, height: 64))
         self.anchorPoint = .init(x: 0.5, y: 0.25) // Anchor is now the bottom of the sprite
@@ -117,10 +120,14 @@ class BaseTroop: SKSpriteNode {
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
+    
+    required init(stats: Stats?, animations: Animations?) {
+        fatalError("Not implemented in base")
+    }
 }
 
-final class Soldier: BaseTroop, Upgradable {
-    init(stats: Stats? = nil, animations: Animations? = nil) {
+final class Soldier: BaseTroop {
+    required init(stats: Stats? = nil, animations: Animations? = nil) {
         let animations: Animations = if let animations {
             animations
         } else {
@@ -137,7 +144,7 @@ final class Soldier: BaseTroop, Upgradable {
             .init(speed: 15, attackFrequency: 0.5, cooldown: 0.25, attackDmg: [0, 2, 3.5], health: 10)
         }
         
-        super.init(stats: stats, animations: animations, isEnemy: false)
+        super.init(stats: stats, animations: animations, isEnemy: false, type: .soldier)
     }
         
     @MainActor required init?(coder aDecoder: NSCoder) {
@@ -145,8 +152,8 @@ final class Soldier: BaseTroop, Upgradable {
     }
 }
 
-final class Orc: BaseTroop, Upgradable {
-    init(stats: Stats? = nil, animations: Animations? = nil) {
+final class Orc: BaseTroop {
+    required init(stats: Stats? = nil, animations: Animations? = nil) {
         let animations: Animations = if let animations {
             animations
         } else {
@@ -160,10 +167,16 @@ final class Orc: BaseTroop, Upgradable {
         let stats: Stats = if let stats {
             stats
         } else {
-            .init(speed: 18, attackFrequency: 0.75, cooldown: 0.25, attackDmg: [0, 2.5, 4], health: 11)
+            .init(
+                speed: 18,
+                attackFrequency: 0.75,
+                cooldown: 0.25,
+                attackDmg: [0, 3.5, 5],
+                health: 15
+            )
         }
         
-        super.init(stats: stats, animations: animations, isEnemy: true)
+        super.init(stats: stats, animations: animations, isEnemy: true, type: .orc)
     }
     
     @MainActor required init?(coder aDecoder: NSCoder) {
