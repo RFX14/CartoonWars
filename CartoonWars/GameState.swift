@@ -14,23 +14,25 @@ internal import SpriteKit
 // - Global timer?
 class GameState {
     private var attacks: [AttackPair] = []
-    private var prevFrontLine: Double? = nil
+    var prevFrontLine: Double? = nil
     private var lastCleanUp: TimeInterval = .zero
     private var lastFrontLineCheck: TimeInterval = .zero
     var player1Troops: [Troop: Int]
     var player2Troops: [Troop: Int]
+    var isApproachingPlayer2: Bool
     
     var frontLineIsStuck: Bool = false
     
     init() {
-        attacks.reserveCapacity(500)
-        player1Troops = [
+        self.attacks.reserveCapacity(500)
+        self.player1Troops = [
             .soldier: 0
         ]
         
-        player2Troops = [
+        self.player2Troops = [
             .orc: 0
         ]
+        self.isApproachingPlayer2 = false
     }
     
     func updateAttacks(for currentTime: TimeInterval) {
@@ -96,6 +98,7 @@ class GameState {
         // Check if there is a prev front line
         let margin: Double = 110
         guard let prevFrontLine else { return }
+        isApproachingPlayer2 = frontLine >= 3000 - (margin * 3)
         guard frontLine > margin || frontLine < (3000 - margin) else { return }
         
         // Check if frontline has moved from previous frontline

@@ -17,7 +17,7 @@ class ComputerPlayer {
     private var turnCount: Int
     
     // Timers
-    private var lastTurn: TimeInterval = .zero
+    private var lastTurnTime: TimeInterval = .zero
     
     init(interface: GameInterface) {
         self.interface = interface
@@ -53,6 +53,11 @@ class ComputerPlayer {
         let analyzeBoardState: () -> NodeResult = { [weak self] in
             guard let self else { return .success }
             
+            // Save for medium if getting close to self
+            if interface.gameState.isApproachingPlayer2 {
+                manaGoal = 10
+            }
+            
             // If game just started, just aim for medium cheap
             if turnCount < 30 {
                 manaGoal = 5
@@ -66,7 +71,6 @@ class ComputerPlayer {
             // If tower is low on health, goal is cheapest tower cost
             if interface.mana.value >= manaGoal {
                 shouldSaveMana = false
-                return .failure
             }
             
             return .failure
@@ -117,7 +121,8 @@ class ComputerPlayer {
     }
     
     func takeTurn(for currentTime: TimeInterval) {
-        guard currentTime - lastTurn > frequency else { return }
+        guard currentTime - lastTurnTime > frequency else { return }
+        lastTurnTime = currentTime
         turnCount += 1
         
         let _ = root!()
