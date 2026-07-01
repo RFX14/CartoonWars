@@ -66,6 +66,10 @@ class Tower: SKSpriteNode {
             parent?.addChild(Soldier())
         case .orc:
             parent?.addChild(Orc())
+        case .werewolf:
+            parent?.addChild(Werewolf())
+        case .knight:
+            parent?.addChild(Knight())
         }
     }
 }

@@ -15,6 +15,10 @@ class Shop {
             Soldier(stats: nil, animations: nil)
         case .orc:
             Orc(stats: nil, animations: nil)
+        case .werewolf:
+            Werewolf()
+        case .knight:
+            Knight()
         }
         
         return upgraded

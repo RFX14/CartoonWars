@@ -21,8 +21,8 @@ struct Stats {
 }
 
 // Generics for performance, but consider Shared Protocol if messy later on
-enum Troop: CaseIterable {
-    case soldier, orc
+enum Troop: String, CaseIterable, Identifiable {
+    case soldier, orc, werewolf, knight
 
     var cost: Int16 {
         switch self {
@@ -30,14 +30,19 @@ enum Troop: CaseIterable {
             1
         case .orc:
             2
+        case .werewolf:
+            10
+        case .knight:
+            10
         }
     }
+    var id: String { self.rawValue }
     
     var belongsToPlayer1: Bool {
         switch self {
-        case .soldier:
+        case .soldier, .knight:
             true
-        case .orc:
+        case .orc, .werewolf:
             false
         }
     }

@@ -8,6 +8,25 @@
 import Foundation
 internal import SpriteKit
 
+enum MapZone: CaseIterable {
+    case zone0, zone1, zone2, zone3, zone4
+    
+    var range: Range<CGFloat> {
+        switch self {
+        case .zone0:
+            0..<300
+        case .zone1:
+            300..<1100
+        case .zone2:
+            1100..<1900
+        case .zone3:
+            1900..<2700
+        case .zone4:
+            2700..<3000
+        }
+    }
+}
+
 // General keep track of everything
 // - Frontline
 // - Who is winning/losing
@@ -16,23 +35,37 @@ class GameState {
     private var attacks: [AttackPair] = []
     var prevFrontLine: Double? = nil
     private var lastCleanUp: TimeInterval = .zero
+    private var lastZoneCleanUp: TimeInterval = .zero
     private var lastFrontLineCheck: TimeInterval = .zero
     var player1Troops: [Troop: Int]
     var player2Troops: [Troop: Int]
     var isApproachingPlayer2: Bool
-    
+    var player1Zones: [MapZone: BaseTroop]
     var frontLineIsStuck: Bool = false
     
     init() {
-        self.attacks.reserveCapacity(500)
-        self.player1Troops = [
-            .soldier: 0
-        ]
+        let allCases: [Troop] = Troop.allCases
+        let troops1: [(Troop, Int)] = allCases.compactMap {
+            if $0.belongsToPlayer1 {
+                return ($0, 0)
+            }
+            
+            return nil
+        }
         
-        self.player2Troops = [
-            .orc: 0
-        ]
+        let troops2: [(Troop, Int)] = allCases.compactMap {
+            if $0.belongsToPlayer1 {
+                return nil
+            }
+            
+            return ($0, 0)
+        }
+                
+        self.attacks.reserveCapacity(500)
+        self.player1Troops = Dictionary(uniqueKeysWithValues: troops1)
+        self.player2Troops = Dictionary(uniqueKeysWithValues: troops2)
         self.isApproachingPlayer2 = false
+        self.player1Zones = [:]
     }
     
     func updateAttacks(for currentTime: TimeInterval) {
@@ -67,6 +100,19 @@ class GameState {
         guard count > capacity * 0.9 else { return }
         
         attacks.removeAll(where: { !$0.isActive })
+    }
+    
+    func cleanUpZones(for currentTime: TimeInterval) {
+        guard currentTime - lastZoneCleanUp > 3 else { return }
+        lastZoneCleanUp = currentTime
+        
+        for zone in MapZone.allCases {
+            if let troop = player1Zones[zone] {
+                if troop.state == .death {
+                    player1Zones.removeValue(forKey: zone)
+                }
+            }
+        }
     }
     
     func computeFrontLine(for currentTime: TimeInterval) {

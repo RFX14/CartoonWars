@@ -18,6 +18,7 @@ struct GameView: View {
     
     private let game: GameScene
     private let cpu: ComputerPlayer?
+    private let usableTroops: [Troop]
     
     init() {
         let gameState = GameState()
@@ -41,6 +42,7 @@ struct GameView: View {
             enemyTower: self._enemyInterface.wrappedValue.tower,
             gameState: gameState, cpu: self.cpu
         )
+        self.usableTroops = Troop.allCases.filter({ $0.belongsToPlayer1 })
     }
     
     var uiHeight: CGFloat {
@@ -110,13 +112,15 @@ struct GameView: View {
                     Spacer()
                     
                     VStack {
-                        GameButton(
-                            text: "Soldier",
-                            color: .red,
-                            action: {
-                                let _ = interface.place(troop: Troop.soldier)
-                        })
-                    }.frame(width: uiHeight, height: uiHeight)
+                        ForEach(usableTroops) { troop in
+                            GameButton(
+                                text: troop.id,
+                                color: .red,
+                                action: {
+                                    let _ = interface.place(troop: troop)
+                            }).frame(width: uiHeight, height: uiHeight)
+                        }
+                    }
                 }
                 
                 Spacer()

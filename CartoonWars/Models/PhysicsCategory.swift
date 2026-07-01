@@ -10,4 +10,9 @@ enum PhysicsCategory: UInt32 {
     case Player = 1
     case Enemy = 2
     case Arrow = 4
+    case Zone0 = 8
+    case Zone1 = 16
+    case Zone2 = 32
+    case Zone3 = 64
+    case Zone4 = 128
 }

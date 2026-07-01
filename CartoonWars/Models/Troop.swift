@@ -106,7 +106,7 @@ class BaseTroop: SKSpriteNode, Upgradable {
         removeAllActions()
         
         state = .attack
-        let attackAnimation = SKAction.animate(with: animations.attack, timePerFrame: 0.1)
+        let attackAnimation = SKAction.animate(with: animations.attack, timePerFrame: 0.06)
         run(SKAction.repeatForever(attackAnimation))
     }
     
@@ -152,6 +152,38 @@ final class Soldier: BaseTroop {
     }
 }
 
+final class Knight: BaseTroop {
+    required init(stats: Stats? = nil, animations: Animations? = nil) {
+        let animations: Animations = if let animations {
+            animations
+        } else {
+            .init(
+                walk: (0...7).map { SKTexture(imageNamed: "knight_walk\($0)") },
+                attack: (0...10).map { SKTexture(imageNamed: "knight_attack\($0)") },
+                death: (0...3).map { SKTexture(imageNamed: "knight_death\($0)") }
+            )
+        }
+        
+        let stats: Stats = if let stats {
+            stats
+        } else {
+            .init(
+                speed: 20,
+                attackFrequency: 0.75,
+                cooldown: 0.25,
+                attackDmg: [0, 5, 7],
+                health: 15
+            )
+        }
+        
+        super.init(stats: stats, animations: animations, isEnemy: false, type: .knight)
+    }
+        
+    @MainActor required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
 final class Orc: BaseTroop {
     required init(stats: Stats? = nil, animations: Animations? = nil) {
         let animations: Animations = if let animations {
@@ -177,6 +209,38 @@ final class Orc: BaseTroop {
         }
         
         super.init(stats: stats, animations: animations, isEnemy: true, type: .orc)
+    }
+    
+    @MainActor required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
+final class Werewolf: BaseTroop {
+    required init(stats: Stats? = nil, animations: Animations? = nil) {
+        let animations: Animations = if let animations {
+            animations
+        } else {
+            .init(
+                walk: (0...7).map { SKTexture(imageNamed: "werewolf_walk\($0)") },
+                attack: (0...12).map { SKTexture(imageNamed: "werewolf_attack\($0)") },
+                death: (0...3).map { SKTexture(imageNamed: "werewolf_death\($0)") }
+            )
+        }
+        
+        let stats: Stats = if let stats {
+            stats
+        } else {
+            .init(
+                speed: 13,
+                attackFrequency: 0.5,
+                cooldown: 0.25,
+                attackDmg: [0, 5, 7.5],
+                health: 15
+            )
+        }
+        
+        super.init(stats: stats, animations: animations, isEnemy: true, type: .werewolf)
     }
     
     @MainActor required init?(coder aDecoder: NSCoder) {

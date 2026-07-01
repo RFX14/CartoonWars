@@ -54,22 +54,22 @@ class ComputerPlayer {
             guard let self else { return .success }
             
             // Save for medium if getting close to self
-            if interface.gameState.isApproachingPlayer2 {
+            if interface.gameState.player1Zones[.zone3] != nil {
                 manaGoal = 10
             }
             
             // If game just started, just aim for medium cheap
-            if turnCount < 30 {
+            if turnCount < 30 || interface.gameState.player1Zones[.zone4] != nil {
                 manaGoal = 5
             }
             
             // If player1 has medium or higher, mana goal is most expensive item
-            if turnCount > 30 && turnCount < 90 {
-                manaGoal = 8
+            if turnCount > 30 && interface.gameState.player1Zones[.zone3] == nil && interface.gameState.player1Zones[.zone4] == nil {
+                manaGoal = 10
             }
             
             // If tower is low on health, goal is cheapest tower cost
-            if interface.mana.value >= manaGoal {
+            if interface.mana.value >= manaGoal || interface.gameState.player1Zones[.zone4] != nil {
                 shouldSaveMana = false
             }
             

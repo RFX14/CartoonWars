@@ -61,12 +61,7 @@ class Mana {
     }
     
     func spend(on troop: Troop) -> Bool {
-        let cost: Int16 = switch troop {
-        case .soldier:
-            1
-        case .orc:
-            2
-        }
+        let cost: Int16 = troop.cost
         
         if value >= cost {
             value -= cost

@@ -44,6 +44,7 @@ class GameScene: SKScene {
                 
         createSky()
         createClouds()
+        createAllCollisionZones()
         addChild(tower)
         addChild(enemyTower)
         
@@ -99,6 +100,7 @@ class GameScene: SKScene {
         
         gameState.updateAttacks(for: currentTime)
         gameState.cleanUp(for: currentTime)
+        gameState.cleanUpZones(for: currentTime)
         gameState.computeFrontLine(for: currentTime)
     }
 }
@@ -122,7 +124,67 @@ extension GameScene {
 
 // MARK: Helper Creators
 extension GameScene {
-    func createClouds() {
+    private func createAllCollisionZones() {
+        for zone in MapZone.allCases {
+            createCollisionZone(zone: zone)
+        }
+    }
+    
+    private func createCollisionZone(zone: MapZone) {
+        let width = zone.range.upperBound - zone.range.lowerBound
+        let height: CGFloat = 300
+        let rect = CGRect(x: zone.range.lowerBound, y: 0, width: width, height: height)
+        let zoneNode = SKShapeNode(rect: rect)
+        
+        zoneNode.zPosition = 0
+        zoneNode.fillColor = .red
+        zoneNode.blendMode  = .add
+        
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        zoneNode.physicsBody = SKPhysicsBody(rectangleOf: rect.size, center: center)
+        zoneNode.physicsBody?.categoryBitMask =  getPhysicsZone(for: zone).rawValue
+        zoneNode.physicsBody?.contactTestBitMask = PhysicsCategory.Player.rawValue
+        zoneNode.physicsBody?.collisionBitMask = PhysicsCategory.None.rawValue
+        zoneNode.physicsBody?.isDynamic = false
+        zoneNode.physicsBody?.affectedByGravity = false
+        zoneNode.physicsBody?.allowsRotation = false
+        
+        addChild(zoneNode)
+    }
+    
+    private func getPhysicsZone(for zone: MapZone) -> PhysicsCategory {
+        return switch zone {
+        case .zone0:
+            .Zone0
+        case .zone1:
+            .Zone1
+        case .zone2:
+            .Zone2
+        case .zone3:
+            .Zone3
+        case .zone4:
+            .Zone4
+        }
+    }
+    
+    private func getMapZone(for physicsZone: PhysicsCategory) -> MapZone {
+       return switch physicsZone {
+        case .Zone0:
+            .zone0
+        case .Zone1:
+            .zone1
+        case .Zone2:
+            .zone2
+        case .Zone3:
+            .zone3
+        case .Zone4:
+            .zone4
+        default:
+            fatalError("Not a zone!")
+        }
+    }
+    
+    private func createClouds() {
         for i in 1...6 {
             let cloud = SKSpriteNode(imageNamed: "cloud")
             cloud.zPosition = .greatestFiniteMagnitude
@@ -136,7 +198,7 @@ extension GameScene {
         }
     }
     
-    func createSky() {
+    private func createSky() {
         let sky = SKSpriteNode(imageNamed: "sky")
         sky.zPosition = .leastNormalMagnitude
         sky.setScale(0.3)
@@ -195,5 +257,70 @@ extension GameScene: SKPhysicsContactDelegate {
             nodeA.takeDamage(dmg: nodeB.attackDmg.first!)
             nodeB.removeFromParent()
         }
+        
+        checkZoneCollision(bodyA: contact.bodyA, bodyB: contact.bodyB)
+    }
+    
+    func didEnd(_ contact: SKPhysicsContact) {
+        let contactA = contact.bodyA.categoryBitMask
+        let contactB = contact.bodyB.categoryBitMask
+        
+        let collision = contactA | contactB
+        let physicsZones: [PhysicsCategory] = [.Zone0, .Zone1, .Zone2, .Zone3, .Zone4]
+        var i = 0
+        for physicsZone in physicsZones {
+            let expectedCollision = PhysicsCategory.Player.rawValue | physicsZone.rawValue
+            
+            if collision == expectedCollision {
+                let zone: MapZone = getMapZone(for: physicsZone)
+                gameState.player1Zones[zone] = nil
+                return
+            }
+            i += 1
+        }
+    }
+    
+    private func checkZoneCollision(bodyA: SKPhysicsBody, bodyB: SKPhysicsBody) {
+        guard let nodeA = bodyA.node else { return }
+        guard let nodeB = bodyB.node else { return }
+        
+        let contactA = bodyA.categoryBitMask
+        let contactB = bodyB.categoryBitMask
+        let collision = contactA | contactB
+        
+        let physicsZones: [PhysicsCategory] = [.Zone0, .Zone1, .Zone2, .Zone3, .Zone4]
+        var i = 0
+        for physicsZone in physicsZones {
+            let expectedCollision = PhysicsCategory.Player.rawValue | physicsZone.rawValue
+            
+            if collision == expectedCollision {
+                let zone: MapZone = getMapZone(for: physicsZone)
+                if let node = getNewNode(for: zone, nodeA: nodeA, nodeB: nodeB) {
+                    gameState.player1Zones[zone] = node
+                    return
+                }
+            }
+            i += 1
+        }
+    }
+    
+    private func getNewNode(for zone: MapZone, nodeA: SKNode, nodeB: SKNode) -> BaseTroop? {
+        if let troop = gameState.player1Zones[zone] {
+            if troop.state == .death {
+                if let nodeA = nodeA as? BaseTroop {
+                    return nodeA
+                } else {
+                    return nodeB as? BaseTroop
+                }
+            }
+        } else {
+            if let nodeA = nodeA as? BaseTroop {
+                return nodeA
+            } else if let nodeB = nodeB as? BaseTroop {
+                return nodeB
+            }
+        }
+        
+        return nil
     }
 }
